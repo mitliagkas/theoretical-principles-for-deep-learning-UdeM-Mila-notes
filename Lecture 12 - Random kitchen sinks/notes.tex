@@ -18,6 +18,7 @@
 %\usepackage[small,bf]{caption}
 \usepackage{algorithm,algorithmic} 
 \usepackage{hyperref}
+\usepackage{bigints}
 
 \usepackage{xcolor}
 \usepackage{shadethm}
@@ -54,21 +55,21 @@
 
 
 \title{
-    IFT 6085 - Lecture 11 \\ 
+    IFT 6085 - Lecture 11 \\
     Weighted Sums of Random Kitchen Sinks:\\ Replacing minimization with randomization in learning
 }
 \date{}
 
 
-\begin{document} 
+\begin{document}
 
 
     \maketitle
-    
-    
+
+
     \vspace{-0.5in}
-    
-    
+
+
     \begin{center}
         This version of the notes has not yet been thoroughly checked.
         Please report any bugs to the scribes or instructor.
@@ -80,13 +81,14 @@
 
     \textbf{Scribes}\hfill
     \textbf{Instructor:}  Ioannis Mitliagkas\\
+    \textbf{Winter 2021:} Sarthak Mittal\\
     \textbf{Winter 2020:} Jean-Philippe Letendre\\
     \textbf{Winter 2019:} Jonathan Guymont, Marzieh Mehdizadeh\\
 
 
     \newcommand{\infgc}{\inf_{g \in \mathcal{C}}}
     \newcommand{\supgc}{\sup_{g \in \mathcal{C}}}
-    
+
     \newcommand{\Prob}{\mathbb{P}}
     \newcommand{\E}{\mathbb{E}}
     \newcommand{\reals}{\mathbb{R}}
@@ -95,67 +97,63 @@
     \newcommand{\der}{\mathrm{d}}
     \newcommand{\soft}{\mathrm{softmax}}
 
-    
+
     \section{Summary}
-    Consider the one hidden layer multilayer perceptron with identity output activation function $f(\mathbf{x})=\mathbf{W}^{(2)}\sigma(\mathbf{W}^{(1)}\mathbf{x})$ where $\sigma$ could be a non linear activation function. A standard way to ensure that $f$ is a good mapping from the input $\mathbf{x}\in \mathcal{X}$ to the output $y\in \mathcal{Y}$ is to optimize (e.g. via SGD) $\mathbf{W}^{(1)}$ and $\mathbf{W}^{(2)}$ such that they minimize the empirical risk. Now consider drawing $\mathbf{W}^{(1)}$ from some distribution $p(\mathbf{W})$ and optimizing the empirical risk over $\mathbf{W}^{(2)}$ only. In this setup, we have $f(\mathbf{x})=\mathbf{W}^{(2)}\phi(\mathbf{x};\mathbf{W}^{(1)})$ where $\phi$ is a deterministic feature map that is initialized randomly. The authors in \cite{NIPS2008_3495} showed that even if the parameter of the feature map are not optimized, minimizing the empirical risk with respect to $\mathbf{W}^{(2)}$ returns a  function whose true risk is near the lowest true risk attainable by an infinite-dimensional class of functions $\mathcal{F}_p$ defined as below: 
-    
+    Consider the one hidden layer multilayer perceptron with identity output activation function $f(\mathbf{x})=\mathbf{W}^{(2)}\sigma(\mathbf{W}^{(1)}\mathbf{x})$ where $\sigma$ could be a non linear activation function. A standard way to ensure that $f$ is a good mapping from the input $\mathbf{x}\in \mathcal{X}$ to the output $y\in \mathcal{Y}$ is to optimize (e.g. via SGD) $\mathbf{W}^{(1)}$ and $\mathbf{W}^{(2)}$ such that they minimize the empirical risk. Now consider drawing $\mathbf{W}^{(1)}$ from some distribution $p(\mathbf{W})$ and optimizing the empirical risk over $\mathbf{W}^{(2)}$ only. In this setup, we have $f(\mathbf{x})=\mathbf{W}^{(2)}\phi(\mathbf{x};\mathbf{W}^{(1)})$ where $\phi$ is a deterministic feature map such that $\bm{W}^{(1)}$ is initialized randomly. The authors in \cite{NIPS2008_3495} showed that even if the parameters of the feature map are not optimized, minimizing the empirical risk with respect to $\mathbf{W}^{(2)}$ returns a  function whose true risk is near the lowest true risk attainable by an infinite-dimensional class of functions $\mathcal{F}_p$ defined as below:
+
     \begin{equation}
-        \mathcal{F}_p \equiv  
-        \left\{f(x) = \int_\Omega \alpha(\omega)\phi(x; \omega) d\omega ~\big |~
+        \mathcal{F}_p \triangleq
+        \left\{f(x) = \int_\Omega \alpha(\omega)\;\phi(x; \omega) \;d\omega ~\Big|~
         |\alpha(\omega)| \leq C p(\omega) \right\}
     \end{equation}
-    
-    where $p(\omega)$ is the distribution from which $\mathbf{W}^{(1)}$ was drawn.
-    
+
+    where $p(\omega)$ is the distribution from which $\mathbf{W}^{(1)}$ is initialized.
+
     \section{Introduction}
-    
-    Given a set of training data in a domain $\{x^{(i)}, y^{(i)}\}_{i=1,...,m}$, $x^{(i)}\in \mathcal{X}$, $y^{(i)}\in \{-1, 1\}$ the goal is to learn the mapping $f\colon \mathcal{X} \mapsto \mathcal{Y}$ that minimizes the empirical risk
-    
+
+    Given a set of training data $S \triangleq \{x^{(i)}, y^{(i)}\}_{i=1}^m$ such that $x^{(i)}\in \mathcal{X}$, $y^{(i)}\in \{-1, 1\}$ for all $i$, the goal is to learn the mapping $f\colon \mathcal{X} \mapsto \mathcal{Y}$ that minimizes the empirical risk
+
     \begin{equation}
-        \hat{R}_S[f] = \sum_{(x, y)\in S} l\left(h(x), y\right)
+        \hat{R}_S[f] = \frac{1}{m}\sum_{(x, y)\in S} c\left(f(x), y\right)
     \end{equation}
-    
-    where $l$ is a loss function that specifying the penalty assign to the deviation between the prediction $f(x)$ and the ground truth $y$ and $S \subset (\mathcal{X} \times \mathcal{Y})$.\\
-    
+
+    where $c: \mathcal{Y} \times \mathcal{Y} \to \mathbb{R}$ is a loss function that quantifies the penalty incurred due to deviation between the prediction $f(x)$ and the ground truth $y$.\\
+
     Similarly to kernel machines, we will consider functions of the form
     \begin{equation}
         f(x) = \sum_i \alpha(\omega_i)\phi(x;\omega_i)\der \omega
     \end{equation}
-    
+
     if $\{\omega_i\}$ is a discrete set, or
-    
+
     \begin{equation}
         f(x) = \int \alpha(\omega)\phi(x;\omega)\der \omega
     \end{equation}
-    
+
     if $\omega$ is continuous. The function $\phi\colon \mathcal{X}\mapsto \reals$ is a feature map parametrized by some vector $\omega\in \Omega$ that is weighted by a function $\alpha\colon \Omega\mapsto \reals$.  Let $\bm{\omega}^*, \bm{\alpha}^*$ be the vectors of weights that minimize the empirical risk, i.e.
 
     \begin{equation}
         \bm{\omega}^*, \bm{\alpha}^* =
-        \argmin_{\omega_1,...,\omega_K \in \Omega,~\alpha_1,..,\alpha_K \in \mathcal{A}}
-        \hat{\mathbf{R}}_S  \left[\sum_{k=1}^K \phi(x; \omega_k)\alpha_k\right]
+        \argmin_{\substack{\omega_1, \dots, \omega_K \in \Omega \\ \alpha_1, \dots, \alpha_K \in \mathcal{A}}}
+        \hat{\mathbf{R}}_S  \left[\sum_{k=1}^K \phi(x; \omega_k)\;\alpha_k\right]
     \end{equation}
-    
-    
-    
-    A standard approach in machine learning is to use some optimization procedure to approximate $\bm{\omega}^*$ and $\bm{\alpha}^*$. However, the authors propose less orthodox way approximate the empirical risk minimizer; instead of optimizing w.r.t $\bm{\omega}$ and $\bm{\alpha}$, draw $\bm{\omega}$ from some distribution $p(\bm{\omega})$ and optimize over $\bm{\alpha}$ only. Algorithm (\ref{alg:sink}) describe the procedure. 
+
+
+
+    A standard approach in machine learning is to use some optimization procedure to approximate $\bm{\omega}^*$ and $\bm{\alpha}^*$. However, the authors propose a slightly less orthodox way of approximating the empirical risk minimizer - instead of optimizing w.r.t $\bm{\omega}$ and $\bm{\alpha}$, they draw $\bm{\omega}$ from some distribution $p(\bm{\omega})$ and optimize over $\bm{\alpha}$ only. Algorithm (\ref{alg:sink}) describes the procedure.
 
 
     \begin{algorithm}[H]
     	\begin{algorithmic}
-    		\REQUIRE A dataset $\{x^{(i)}, y^{(i)}\}_{i=1,...,n}$
-    		\REQUIRE A bounded feature function $|\phi(x;\omega)|\leq 1$
-    		\REQUIRE $K\in \nat$
-    		\REQUIRE $C\in \reals$
-    		\REQUIRE A probability distribution $p(\bm{\omega})$
-    		\ENSURE A function $\hat{h}(x)=\sum_{k=1}^K\phi(x;\omega_k)\alpha_k$
-    		\STATE Draw $\bm{\omega}\in\reals^K$ from $p(\bm{\omega})$
-    		\STATE Featurize the input: $\mathbf{z}^{(i)}\leftarrow \phi(\mathbf{x}^{(i)};\bm{\omega})$
-    		\STATE With $\bm{\omega}$ fixed,  solve the empirical risk minimization problem
+    		\REQUIRE A dataset $\{x^{(i)}, y^{(i)}\}_{i=1}^m$ of $m$ points, a bounded feature function $|\phi(x;\omega)|\leq 1$, an integer $K \in \mathbb{N}$, a scalar $C \in \mathbb{R}$ and a probability distribution $p(\omega)$ on the parameters of $\phi$.
+    		\ENSURE A function $\hat{f}(x)=\sum_{k=1}^K\phi(x;\omega_k)\alpha_k$
+    		\STATE Draw $\omega_1, \dots, \omega_K \overset{iid}{\sim} p(\omega)$
+    		\STATE Featurize the input: $\mathbf{z}^{(i)}\leftarrow [\phi(x^{(i)}; \omega_1), \dots, \phi(x^{(i)}; \omega_K)]$
+    		\STATE With $\omega_i's$ fixed,  solve the empirical risk minimization problem
     		\begin{equation}
     		    \bm{\alpha}^* =
                 \argmin_{\bm{\alpha} \in \reals^K}
-                \frac{1}{n}\sum_{i=1}^n l\left(\bm{\alpha}^\top\mathbf{z}^{(i)}, y^{(i)}\right)
+                \frac{1}{m}\sum_{i=1}^m l\left(\bm{\alpha}^\top\mathbf{z}^{(i)}, y^{(i)}\right)
     		\end{equation}
     		s.t $||\bm{\alpha}||_{\infty}\leq C / K$.
     	\end{algorithmic}
@@ -163,57 +161,57 @@
     	\label{alg:sink}
     \end{algorithm}
 
-    The following theorem (\ref{thm:main}) states that algorithm $(\ref{alg:sink})$ has low \textit{true risk}. The true risk $\mathbf{R}[h]$ is defined as the expected loss on points drawn from the data distribution $\mathcal{D}$.
-    
+    The following Theorem (\ref{thm:main}) states that algorithm $(\ref{alg:sink})$ has low \textit{true risk}. The true risk $\mathbf{R}[f]$ is defined as the expected loss on points drawn from the data distribution $\mathcal{D}$.
+
     \begin{equation}
-        \mathbf{R}[f] = \E_{(x,y)\sim \mathcal{D}} l(f(x), y)
+        \mathbf{R}[f] = \E_{(x,y)\sim \mathcal{D}}\; \Big[c(f(x), y)\Big]
     \end{equation}
-    
-    More specifically, theorem (\ref{thm:main}) states Algorithm (\ref{alg:sink}) returns a function whose true risk is near the lowest true risk attainable by an infinite-dimensional class of functions $\mathcal{F}_p$ defined below:
+
+    More specifically, Theorem (\ref{thm:main}) states that Algorithm (\ref{alg:sink}) returns a function whose true risk is near the lowest true risk attainable by an infinite-dimensional class of functions $\mathcal{F}_p$ defined below:
 
 
 
 \begin{thm}(Main result)
-    Let $p$ be a distribution on $\Omega$, and let $\phi$ satisfy $\sup_{x,w} |\phi(x; w)| \leq 1$ (uniformly bounded).
+    Let $p$ be a distribution on $\Omega$, and let $\phi$ satisfy $\sup_{x,\omega} |\phi(x; \omega)| \leq 1$ (uniformly bounded).
     Define the hypothesis set as follows:
     \begin{equation}
-        \mathcal{F}_p \equiv  
-        \left\{f(x) = \int_\Omega \alpha(\omega)\phi(x; \omega) d\omega ~\big |~
+        \mathcal{F}_p \triangleq
+        \left\{f(x) = \int_\Omega \alpha(\omega)\;\phi(x; \omega) \;d\omega ~\Big|~
         |\alpha(\omega)| \leq C p(\omega) \right\}
     \end{equation}
-    Suppose the loss function is as below $l(y, y^{'})= l(yy^{'})$,  with $l(yy^{'})$ L-Lipschitz. Then for any $\delta > 0$, if the training data $\{x_i, y_i\}_{i=1\cdots m}$ are drawn $i.i.d$ from some distribution $P$, Algorithm \ref{alg:sink} returns a function $\hat{f}$ that satisfies
+    Suppose the loss function can be written as $c(y, y')= c(yy')$,  with $c(yy')$ L-Lipschitz. Then for any $\delta > 0$, if the training data $\{x_i, y_i\}_{i=1}^m$ are drawn $i.i.d$ from some distribution $P$, Algorithm \ref{alg:sink} returns a function $\hat{f}$ that satisfies
     \begin{equation*}
-        \mathbf{R}[\hat{f}] - \min_{f\in \mathcal{F}_p}\mathbf{R}[f] \leq O \left\{ \left(\left(\frac{1}{\sqrt{m}} + \frac{1}{\sqrt{K}}\right)LC \sqrt{\log 1/\delta}\right)\right\}
+        \mathbf{R}[\hat{f}] - \min_{f\in \mathcal{F}_p}\mathbf{R}[f] \leq O \left(\left(\frac{1}{\sqrt{m}} + \frac{1}{\sqrt{K}}\right)LC \sqrt{\log 1/\delta}\right)
     \end{equation*}
     with probability at least $1 - 2\delta$ over the training dataset and the choice of the parameters $\omega_1, \cdots , \omega_K$.
     \label{thm:main}
 \end{thm}
-$C$ is arbitrarily chosen and can be considered as a regularizer. The term $\ p(w)$ can be viewed as a distribution over the weights we're considering. By having a low probability over less desirable weights, the $\ |\alpha(\omega)| \leq C p(\omega)$ condition upper bounds the value of the weights $\ \alpha(w_i)$ to their probability $\ p(w_i)$, rescaled by a constant $\ C$.
-The hypothesis set $\mathcal{F}_p$ is quite rich. It consists of functions whose weights $\alpha(\omega)$ decays more rapidly than the
-given sampling distribution $p$.
+$C$ is arbitrarily chosen and can be considered as a regularizer. The term $\ p(\omega)$ can be viewed as a distribution over the weights we're considering. By having a low probability over less desirable weights, the $\ |\alpha(\omega)| \leq C p(\omega)$ condition upper bounds the value of the weights $\ \alpha(\omega_i)$ to their probability $\ p(\omega_i)$, rescaled by a constant $\ C$.
+The hypothesis set $\mathcal{F}_p$ is quite rich. It consists of functions whose weights $\alpha(\omega)$ decay more rapidly than the
+given sampling distribution $p(\omega)$.
 
 \section{Steps to prove the Main Theorem}
 Algorithm \ref{alg:sink} returns a function that lies in the random set:
 \[
-        \mathcal{\hat{F}}_\omega \equiv  
-        \left\{f(x) = \int_\Omega \alpha(\omega)\phi(x; \omega) d\omega ~\big |~
-        |\alpha(\omega)| \leq C/K \right\}
+        \mathcal{\hat{F}}_\omega \triangleq
+        \left\{f(x) = \sum_{k=1}^K \alpha_k \; \phi(x; \omega_k) ~\Big|~
+        |\alpha_k| \leq C/K \;\;\forall k\right\}
 \]
 We are going to see how much we loose by going from $\mathcal{F}_p$ to $\mathcal{\hat{F}}_\omega$.\\
 The upper bound in the main theorem can be decomposed in a standard way into two bounds:
 \begin{itemize}
     \item  An approximation error bound that shows that the lowest true risk attainable by a function
     in $\hat{\mathcal{F}}_\omega$ is not much larger than the lowest true risk attainable in $\mathcal{F}_p$ (Lemma \ref{lma:approx_bound}).
-    
+
     \item An estimation error bound  that shows that the true risk  of every function in $\hat{\mathcal{F}}_\omega$ is    close to its empirical risk (Lemma \ref{lma:estimation_bound})
 \end{itemize}
 
-Before going further, we introduce the following lemma which will be helpful later on to prove the bound on the approximation error. It which states that the average bounded vectors in Hilbert space concentrates towards its expectation in the Hilbert norm exponentially fast. 
+Before going further, we introduce the following lemma which will be helpful later on to prove the bound on the approximation error. It which states that the average bounded vectors in Hilbert space concentrates towards its expectation in the Hilbert norm exponentially fast.
 
 \begin{lemma}
-    (Taken from Lemma 2.4 in \citep{NIPS2008_3495}) Let $\ \mathbb{X} = {x_1, ..., x_K}$ be i.i.d. random variables in a ball \mathcal{H} of radius M centered around the origin in a Hilbert space. Denote their average by $\ \bm{\Bar{X}} = \frac{1}{K}\sum_{k=1}^{K} x_k$. Then, for any $\ \delta > 0$, with probability $\ 1-\delta$, 
+    (Taken from Lemma 4 in \citep{NIPS2008_3495}) Let $\ \mathbf{X} = \{x_1, \dots, x_K\}$ be i.i.d. random variables in a ball \mathcal{H} of radius M centered around the origin in a Hilbert space. Denote their average by $\ \bm{\Bar{X}} = \frac{1}{K}\sum_{k=1}^{K} x_k$. Then, for any $\ \delta > 0$, with probability at least $\ 1-\delta$,
     \begin{align*}
-        ||\bm{\Bar{X}] - \E[\bm{\Bar{X}}]}|| \leq \frac{M}{\sqrt{K}}(1 + \sqrt{2\log 1/\delta})
+        ||\bm{\Bar{X} - \E[\bm{\Bar{X}}]}|| \leq \frac{M}{\sqrt{K}}\left(1 + \sqrt{2\log 1/\delta}\right)
     \end{align*}
     \label{lma:concentration_bound_1}
 \end{lemma}
@@ -222,53 +220,51 @@ The following Lemma is also helpful in bounding the approximation error:
 \begin{lemma}
      Let $\mu$ be a measure on $\mathcal{X}$ , and $f^{*}$
     a function in $\mathcal{F}_p$. If $\omega_1,\cdots, \omega_K$ are drawn $i.i.d$ from $p$,
-    then for any $\delta > 0$, with probability at least $1 - \delta$ over $\omega_1,\cdots , \omega_K$, 
+    then for any $\delta > 0$, with probability at least $1 - \delta$ over $\omega_1,\cdots , \omega_K$,
     there exists a function $\hat{f} \in \mathcal{\mathcal{F}}_\omega$
     so that
     \[
-    \sqrt{\int_\mathcal{X} \left(\hat{f}(x)- f^{*}(x) \right)^2}d\mu(x) \leq \frac{C}{\sqrt{K}} \left( 1+ \sqrt{2 \log 1/\delta}\right)
+    \sqrt{\int_\mathcal{X} \left(\hat{f}(x)- f^{*}(x) \right)^2d\mu(x)} \leq \frac{C}{\sqrt{K}} \left( 1+ \sqrt{2 \log 1/\delta}\right)
     \]
     \label{lma:concentration_bound_2}
 \end{lemma}
 
 \begin{proof}
-   We can write $\ f^*(x) = \int_\Omega \alpha(\omega)\phi(x;\omega) dw$, since $\ f* \in \mathcal{F}_p$. Given $\ \beta_k \equiv \frac{\alpha(\omega_k)}{p(\omega_k)}$, we construct the following function:
-    \\
+   Since $f^* \in \mathcal{F}_p$, we can write $\ f^*(x) = \int_\Omega \alpha(\omega)\;\phi(x;\omega) \;d\omega$. Given $\ \beta_k \triangleq \frac{\alpha(\omega_k)}{p(\omega_k)}$, we construct the following function:
     \begin{align*}
-        f_k = \beta_k\phi(\cdot;\omega_k) \\
+        f_k = \beta_k\;\phi(\cdot;\omega_k)
     \end{align*}
-    
-    with $\ k = 1, ..., K$, such that 
+    with $\ k = 1, \dots, K$, such that
     \begin{align*}
-        \E_{\omega_k}[f_k] = \int \beta_k\phi(\cdot;\omega_k)p(\omega_k) d\omega_k \\
-        = \int \frac{\alpha(\omega_k)}{p(\omega_k)}\phi(\cdot;\omega_k)p(\omega_k) d\omega_k \\
-        = \int \alpha(\omega_k)\phi(\cdot;\omega_k) d\omega_k \\
-        = f^*. 
+        \E_{\omega_k}\big[f_k\big] &= \int \beta_k\;\phi(\cdot\;;\omega_k)\;p(\omega_k) \;d\omega_k \\
+        &= \int \frac{\alpha(\omega_k)}{p(\omega_k)}\;\phi(\cdot\;;\omega_k)
+        \;p(\omega_k) \;d\omega_k \\
+        &= \int \alpha(\omega_k)\;\phi(\cdot;\omega_k)\; d\omega_k \\
+        &= f^*
     \end{align*}
-    The last step is obtained by the definition of $\ f^*$. It tells us that by expectation, the random function $\ f_k$ is part of the hypothesis set $\ \mathcal{F}_p$. Consider the empirical average $\ \hat{f}(x) = \sum_{k=1}^K \frac{\beta_k}{K}\phi(x;\omega_k)$ over $\ K$ instances of $\ f_k$. Re-writing our weight value condition found in the definition of the hypothesis set $\ \mathcal{F}_p$, we have that $\ \frac{|\alpha(\omega)|}{p(\omega)} \leq C$. Therefore, $\ \hat{f} \in \mathcal{\hat{F}_{\omega}}$ since $\ |\frac{\beta_k}{K}| = |\frac{\alpha(\omega)}{p(\omega)K}| \leq \frac{C}{K}$.
-    \\
-    
-    We'll use Lemma \ref{lma:concentration_bound_1} to finish the proof. To do so, we need to make sure the random variables $\ f_k$ are in a ball of radius $\ C$, i.e. the norm of the random variables is below C. Using $\ ||x|| = \sqrt{\langle\,x,x\rangle}$ and re-writing the inner product $\ \langle\,f,g\rangle = \int f(x)g(x) d\mu(x)$, we have
-    
+    The last step is obtained from the definition of $\ f^*$. It tells us that in expectation, the random function $\ f_k$ is part of the hypothesis set $\ \mathcal{F}_p$. Consider the empirical average $\ \hat{f}(x) = \frac{1}{K}\sum\limits_{k=1}^K \beta_k\;\phi(x;\omega_k)$ over $\ K$ instances of $\ f_k$. Re-writing our weight value condition found in the definition of the hypothesis set $\ \mathcal{F}_p$, we have that $\ \frac{|\alpha(\omega)|}{p(\omega)} \leq C$. Therefore, $\ \hat{f} \in \mathcal{\hat{F}_{\omega}}$ since $\ |\frac{\beta_k}{K}| = |\frac{\alpha(\omega_k)}{K\;p(\omega_k)}| \leq \frac{C}{K}$ for all $k$.\\
+
+    We will use Lemma \ref{lma:concentration_bound_1} to finish the proof. To do so, we need to make sure the random variables $\ f_k$ are in a ball of radius $\ C$, i.e. the norm of the random variables is below C. Using $\ ||x|| = \sqrt{\langle\,x,x\rangle}$ and re-writing the inner product $\ \langle\,f,g\rangle = \bigintsss_{\mathcal{X}} f(x)\;g(x)\; d\mu(x)$, we have
+
     \begin{align*}
-        ||f_k|| = \sqrt{\langle\,f_k,f_k\rangle} = \sqrt{\int f_k(x)f_k(x) d\mu(x)} \\
-        = \sqrt{\int \beta_k^2\phi^2(\cdot;\omega_k) d\mu(x)} \\
-        = |\beta_k| \sqrt{\int \phi^2(\cdot;\omega_k) d\mu(x)} \quad \quad \text{(Since $\ \beta_k$ is independent of x)} \\
-        \leq |\beta_k| \sqrt{\int 1 d\mu(x)} \quad \quad \text{(Since $\ \phi^2(\cdot;\omega_k) \leq 1$)} \\
-        = |\beta_k| \\
-        \leq C \\
+        ||f_k|| &= \sqrt{\langle\,f_k,f_k\rangle} \\
+        &= \sqrt{\int f_k(x)\;f_k(x) \;d\mu(x)} \\
+        &= \sqrt{\int \beta_k^2\;\phi^2(\cdot\;;\omega_k) \;d\mu(x)} \\
+        &= |\beta_k| \sqrt{\int \phi^2(\cdot\;;\omega_k) \;d\mu(x)} \quad \quad \text{(Since $\ \beta_k$ is independent of x)} \\
+        &\leq |\beta_k| \sqrt{\int 1 \;d\mu(x)} \quad \quad \text{(Since $\ \phi^2(\cdot\;;\omega_k) \leq 1$)} \\
+        &= |\beta_k| \\
+        &\leq C \\
     \end{align*}
-    
-    Where the square root is simplified to 1 because we're integrating a probability distribution over it's whole domain, giving 1. Therefore, we have $\ ||f_k|| \leq C$, and we can apply Lemma \ref{lma:concentration_bound_1}, concluding the proof.
-    
+    Where the square root is simplified to 1 because we are integrating a probability distribution over its whole domain, giving 1. Therefore, we have $\ ||f_k|| \leq C$, and we can apply Lemma \ref{lma:concentration_bound_1}, concluding the proof.
+
 \end{proof}
 
-\begin{lemma} (Bound on the approximation error) 
-    Suppose $l(y, y^{'})$ is L-Lipschitz in its first argument. Let $f^{*}$
-    be a fixed function in $\mathcal{F}_p$. If $\omega_1,\cdots, \omega_K$ 
+\begin{lemma} (Bound on the approximation error)
+    Suppose $c(y, y')$ is L-Lipschitz in its first argument. Let $f^{*}$
+    be a fixed function in $\mathcal{F}_p$. If $\omega_1,\cdots, \omega_K$
     are drawn $i.i.d$ from $p$, then for any $\delta > 0$, with
-    probability at least $1 - \delta$ over $\omega_1, \cdots ,\omega_K$, 
-    there exists a function $\hat{f} \in \mathcal{\hat{F}}_\omega$ 
+    probability at least $1 - \delta$ over $\omega_1, \cdots ,\omega_K$,
+    there exists a function $\hat{f} \in \mathcal{\hat{F}}_\omega$
     that satisfies
     \begin{equation*}
         \mathbf{R}[\hat{f}] \leq \mathbf{R}[f^{*}]
@@ -278,81 +274,90 @@ The following Lemma is also helpful in bounding the approximation error:
 \end{lemma}
 
 \begin{proof}
-    For any two functions $\ f$ and $\ g$, the Lipschitz condition on $\ l$ followed by the concavity of square root gives
+    For any two functions $\ f$ and $\ g$, the Lipschitz condition on $\ c(\cdot, \cdot)$ followed by the concavity of square root gives
     \begin{align*}
-        \bm R[f] - R[g] = \E [l(f(x),y) - l(g(x),y)] \leq \E[|l(f(x),y) - l(g(x),y)|] \\
-        \leq L\ \E[|f(x) - g(x)|] \leq L\sqrt{\E(f(x)-g(x))^2}
+        \bm R[f] - \bm R[g] &= \E \Big[c(f(x),y) - c(g(x),y)\Big] \\
+        &\leq \E\Big[\Big|c(f(x),y) - c(g(x),y)\Big|\Big] \\
+        &\leq L\ \E\Big[\Big|f(x) - g(x)\Big|\Big] \qquad\qquad \text{($c$ is L-Lipschitz)}\\
+        &\leq L\sqrt{\E\Big[(f(x)-g(x))^2\Big]} \qquad\qquad \text{(Using Jensen's Inequality)}
     \end{align*}
-    
     The proof is then obtained by applying Lemma \ref{lma:concentration_bound_2}.
 \end{proof}
 
-Notice the $\ \sqrt{K}$ denominator term in the right side of the lemma's inequality. It tells us that the upper bound on the approximation error decays as we increase the number of random features K considered. Using more features is computationally more demanding and extends training runtime, but rewards us by decreasing the error's upper bound. A standard result from statistical learning theory states that for a given choice of $\omega_1,\cdots, \omega_K$the empirical risk of every function in $\hat{\mathcal{F}}_\omega$ is close to its true risk. The following lemma can be proven by using Holder inequality.
+Notice the $\ \sqrt{K}$ denominator term in the right side of the lemma's inequality. It tells us that the upper bound on the approximation error decays as we increase the number of random features K considered. Using more features is computationally more demanding and extends training runtime, but rewards us by decreasing the error's upper bound. \\
 
-\begin{lemma}   
-    (Bound on the estimation error). Suppose $l(y, y^{'}) = l(yy^{'})$, with $l(yy^{'})$ L-Lipschitz. Let $\omega_1,\cdots, \omega_K$ be fixed. 
-    If $\{x_i, y_i\}\quad i=1\cdots m$ are drawn $i.i.d$ from a fixed distribution, 
-    for any $\delta > 0$, with probability at least $1 - \delta$
-    over the dataset, we have
+A standard result from statistical learning theory states that for a given choice of $\omega_1,\cdots, \omega_K$ the empirical risk of every function in $\hat{\mathcal{F}}_\omega$ is close to its true risk. The following lemma can be proven by using Holder inequality.
+
+\begin{lemma}
+    (Bound on the estimation error). Suppose $c(y, y') = c(yy')$, with $c(yy')$ L-Lipschitz. Let $\omega_1,\cdots, \omega_K$ be fixed.
+    If $\{x^{(i)}, y^{(i)}\}_{i=1}^m$ be drawn $i.i.d$ from a fixed distribution, then for any $\delta > 0$, with probability at least $1 - \delta$ over the dataset, we have
     \[
-    \forall \hat{f} \in \mathcal{\hat{F}}_\omega \quad 
-     \big| \mathbf{R}[f]- \mathbf{\hat{R}}[f]\big| \leq \frac{1}{\sqrt{m}} \left(4LC + 2|c(0)| + LC \sqrt{\frac{1}{2} \log 1/\delta}
-\right) 
+    \forall \hat{f} \in \mathcal{\hat{F}}_\omega \quad
+     \Big| \mathbf{R}[f]- \mathbf{\hat{R}}[f]\Big| \leq \frac{1}{\sqrt{m}} \left(4LC + 2|c(0)| + LC \sqrt{\frac{1}{2} \log 1/\delta}
+\right)
      \]
      \label{lma:estimation_bound}
 \end{lemma}
-
-No we are ready to give a sketch of the proof of main theorem by using the above lemmas.\\
-\begin{proof}[Proof of theorem 1]
+Now we are ready to give a sketch of the proof of main theorem using the above lemmas.\\
+\begin{proof}[Proof of Theorem 1]
     Let $f^*$ be a minimizer of the true risk $\mathbf{R}$ over $\mathcal{F}_p$, $\hat{f}$ be a minimizer of the empirical risk $\hat{\mathbf{R}}$ over $\hat{\mathcal{F}}_\omega$ (i.e. $\hat{f}$ is the output of Algorithm \ref{alg:sink}), and $\hat{f}^*$ be a minimizer of the true risk $\mathbf{R}$ over $\hat{\mathcal{F}}_\omega$ (i.e. $\hat{f}^*$ is the optimal output of Algorithm \ref{alg:sink}). Then
-    
+
     \begin{align}
-        \mathbf{R}[\hat{f}]-\mathbf{R}[f^*] 
+        \mathbf{R}[\hat{f}]-\mathbf{R}[f^*]
         =& \mathbf{R}[\hat{f}]-\mathbf{R}[\hat{f}^*]+\mathbf{R}[\hat{f}^*]-\mathbf{R}[f^*] \\
-        \leq& |\mathbf{R}[\hat{f}]-\mathbf{R}[\hat{f}^*]|+\mathbf{R}[\hat{f}^*]-\mathbf{R}[f^*] 
+        \leq& \Big|\mathbf{R}[\hat{f}]-\mathbf{R}[\hat{f}^*]\Big|+\mathbf{R}[\hat{f}^*]-\mathbf{R}[f^*]
     \end{align}
-    
     Let $\epsilon_{\text{est}}$ denote the upper bound of the right side of the inequality in Lemma \ref{lma:estimation_bound}:
     \begin{equation*}
         \epsilon_{\text{est}}
-        = \frac{1}{\sqrt{m}} \left(4LC + 2|c(0)| + LC \sqrt{\frac{1}{2} \log 1/2}\right) 
+        = \frac{1}{\sqrt{m}} \left(4LC + 2|c(0)| + LC \sqrt{\frac{1}{2} \log 1/2}\right)
     \end{equation*}
-    
+
     With probability at least $1-\delta$ we have
-    
+
     \begin{align*}
-        |\mathbf{R}[\hat{f}]-\mathbf{R}[\hat{f}^*]| 
-           =& |\mathbf{R}[\hat{f}]+\hat{\mathbf{R}}[\hat{f}^*]
-                -\hat{\mathbf{R}}[\hat{f}^*]-\mathbf{R}[\hat{f}^*]|\\
-        \leq& |\mathbf{R}[\hat{f}]+\underbrace{\hat{\mathbf{R}}[\hat{f}^*]
-                -\hat{\mathbf{R}}[\hat{f}]}_{\geq 0}-\mathbf{R}[\hat{f}^*]|\quad\quad \text{(By optimality of $\hat{f}$)}\\        
-        \leq& |\mathbf{R}[\hat{f}]-\hat{\mathbf{R}}[\hat{f}]| + 
-                |\mathbf{R}[\hat{f}^*]-\hat{\mathbf{R}}[\hat{f}^*]| \\
+        \Big|\mathbf{R}[\hat{f}]-\mathbf{R}[\hat{f}^*]\Big|
+           =&  \Big|\mathbf{R}[\hat{f}]+\hat{\mathbf{R}}[\hat{f}^*] -\hat{\mathbf{R}}[\hat{f}^*]-\mathbf{R}[\hat{f}^*]\Big|\\
+        \leq& \Big|\mathbf{R}[\hat{f}]+\underbrace{\hat{\mathbf{R}}[\hat{f}^*] -\hat{\mathbf{R}}[\hat{f}]}_{\geq 0}-\mathbf{R}[\hat{f}^*]\Big|\quad\quad \text{(By optimality of $\hat{f}$)}\\
+        \leq& \Big|\mathbf{R}[\hat{f}]-\hat{\mathbf{R}}[\hat{f}]\Big| +     \Big|\mathbf{R}[\hat{f}^*]-\hat{\mathbf{R}}[\hat{f}^*]\Big| \\
         \leq& 2\epsilon_{\text{est}} \hspace{135pt} \text{(By Lemma \ref{lma:estimation_bound})}
     \end{align*}
-    
+
      Let $\epsilon_{\text{app}}$ denote the right term in the upper bound of the inequality in Lemma \ref{lma:approx_bound}:
-     
+
      \begin{equation*}
          \epsilon_{\text{app}} = \frac{LC}{\sqrt{K}} \left(1+\sqrt{2 \log 1/\delta} \right)
      \end{equation*}
-     
-     Also note that $\mathbf{R}[\hat{f}^*]<\mathbf{R}[\hat{f}]$ since $\hat{f}^*$ minimize the true risk over $\mathcal{F}_\omega$. Using this fact we have that with probability at least $1-\delta$ the following inequality hold
-     
+
+     Using Lemma \ref{lma:approx_bound}, we get that there exists a function $g \in \hat{\mathcal{F}}_\omega$ such that with probability at least $1-\delta$, we have
+     \begin{align*}
+         \bm R[g] - \bm R[f^*] &\leq \epsilon_{app}
+     \end{align*}
+     Also note that $\mathbf{R}[\hat{f}^*]\leq\mathbf{R}[g]$ since $g \in \hat{\mathcal{F}}_\omega$ and $\hat{f}^*$ minimizes the true risk over $\hat{\mathcal{F}}_\omega$. Using this fact we have that
      \begin{align*}
          \mathbf{R}[\hat{f}^*]-\mathbf{R}[f^*]
-         \leq& \mathbf{R}[\hat{f}]-\mathbf{R}[f^*] \quad\quad \text{($\hat{f}^*$ minimize $\mathbf{R}$ over $\mathcal{F}_\omega$)}\\
+         \leq& \mathbf{R}[g]-\mathbf{R}[f^*] \quad\quad \text{($\hat{f}^*$ minimize $\mathbf{R}$ over $\hat{\mathcal{F}}_\omega$)}\\
          \leq& \epsilon_{\text{app}} \quad\hspace{52.5pt}\text{(Lemma \ref{lma:approx_bound})}
      \end{align*}
-     
-     Hence
-     
-     \begin{align}
-        \mathbf{R}[\hat{f}]-\mathbf{R}[f^*] 
+     holds with probability at least $1-\delta$. \\
+
+     Next, we consider the following two events:
+     \begin{itemize}
+         \item $E_1: \left\{\Big| \mathbf{R}[\hat{f}]-\mathbf{R}[\hat{f}^*]\Big| \nleq 2\epsilon_{est}\right\}$ and we know from above that $P(E_1) \leq \delta$.
+         \item $E_2: \left\{\mathbf{R}[\hat{f}^*]-\mathbf{R}[f^*] \nleq \epsilon_{app}\right\}$ and we know from above that $P(E_2) \leq \delta$.
+     \end{itemize}
+     Using union bound, we know that the probability of either
+      $E_1$ or $E_2$ occurring is
+      \begin{align*}
+          P(E_1 \cup E_2) &\leq P(E_1) + P(E_2) \\
+          &\leq 2\delta
+      \end{align*}
+     Hence, the compliment $(E_1 \cup E_2)^c$, which is that both event $\left\{\Big| \mathbf{R}[\hat{f}]-\mathbf{R}[\hat{f}^*]\Big| \leq 2\epsilon_{est}\right\}$ and event $\left\{\mathbf{R}[\hat{f}^*]-\mathbf{R}[f^*] \leq \epsilon_{app}\right\}$ happen simultaneously, occurs with probability $1 - P(E_1 \cup E_2) \geq 1 - 2\delta$. Thus, we get that
+     \begin{align*}
+        \mathbf{R}[\hat{f}]-\mathbf{R}[f^*]
         \leq 2\epsilon_{\text{est}} + \epsilon_{\text{app}},
-    \end{align}
-    
-    and we get the desired result.
+    \end{align*}
+    holds with probability at least $1-2\delta$, which is the desired result.
 \end{proof}
 
 
