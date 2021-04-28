@@ -18,6 +18,9 @@
 \usepackage{hyperref}
 \usepackage{graphbox}
 
+\usepackage{import}
+\import{../utils/}{macros.tex}
+
 \usepackage{xcolor}
 \usepackage{shadethm}
 
@@ -59,10 +62,10 @@
 \DeclareMathOperator*{\tr}{tr}
 \DeclareMathOperator*{\prox}{prox}
 \DeclareMathOperator*{\conv}{conv}
-\DeclareMathOperator*{\dom}{dom}
+% \DeclareMathOperator*{\dom}{dom}
 \DeclareMathOperator*{\minimize}{minimize}
 \DeclareMathOperator*{\maximize}{maximize}
-\DeclareMathOperator*{\sign}{sign}
+% \DeclareMathOperator*{\sign}{sign}
 \DeclareMathOperator*{\vecop}{vec}
 \DeclareMathOperator*{\Poisson}{Poisson}
 \DeclareMathOperator*{\Cat}{Cat}
@@ -74,14 +77,14 @@
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\X}{\mathcal{X}}
 
-\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
-\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+% \DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+% \DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
 \DeclarePairedDelimiter{\inprod}{\langle}{\rangle}
 \DeclarePairedDelimiter{\biginprod}{\big\langle}{\big\rangle}
 \DeclarePairedDelimiter{\Biginprod}{\Big\langle}{\Big\rangle}
 \DeclarePairedDelimiter{\bigginprod}{\bigg\langle}{\bigg\rangle}
 \DeclarePairedDelimiter{\Bigginprod}{\Bigg\langle}{\Bigg\rangle}
-\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+% \DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
 
 
 \definecolor{shadethmcolor}{HTML}{F0F0F0}
@@ -92,7 +95,8 @@
 \setlength{\shadeboxrule}{.4pt}
 
 
-\setlength\parindent{0pt}
+% \setlength\parindent{0pt}
+\usepackage{parskip}
 
 % Packages hyperref and algorithmic misbehave sometimes.  We can fix
 % this with the following command.
@@ -139,42 +143,74 @@ Basics of convex analysis and gradient descent }
 \newcommand{\infgc}{\inf_{g \in \mathcal{C}}}
 \newcommand{\supgc}{\sup_{g \in \mathcal{C}}}
 
+\section*{Notations}
+\label{sec:notations}
+% [TODO] Maintain
+We begin our discussion of this crash-course in optimization by setting the notation.
+We will use upper-case italicized bold-face letters like $\mX, \mY, \mZ$ to denote matrices, lower-case italicized bold-face letters like $\vx, \vy, \vz$ to denote vectors, and lower-case italicized letters $\evx, \evy, \evz$ to denote scalars.
+Later on in the course, we will be working with stochastic entities.
+There, we will use lower-case letter like $\rx, \ry, \rz$ to denote a random variables and we will use lower-case bold-face letters like $\rvx, \rvy, \rvz$ to represent random vectors.
+Should we need them in our discussions, we would use upper-case bold-face letters like $\tX, \tY, \tZ$ to denote tensors.
 
 \section{Introduction}
- 
-Many machine learning problems involve learning parameters $\theta \in \Theta$ of a function $f$ towards achieving an objective better. Typically, such objectives are characterized by a loss function $L: \Theta\to\R$, also called the empirical risk, and training the model corresponds to searching the optimal parameters $\theta^\ast$ that minimize this loss.\\
+\label{sec:introduction}
+Supervised machine learning is often framed as an optimization problem. 
+Given an input $\vx \in \mathcal{X}$, we want to learn to predict its output $y \in \mathcal{Y}$, which could be either discrete (e.g. for classification) or continuous (e.g. for regression). 
+We have a training set $\curlbrackets{(\vx^{(i)}, y^{(i)})}_{i=1}^m$ drawn iid from $\mathcal{D}$, the (unknown) joint data generating distribution over $(\vx, y)$.
 
-For example, in supervised learning, $\theta$ parameterizes a function $f: X\to Y$, where any $x \in X$ is an input and any $y \in Y$ is a target label. Then,
+The ultimate goal here is to somehow achieve a ``good performance on unseen data.'' 
+We want to learn a predictor $f_\theta: \mathcal{X} \to \mathcal{Y}$ parameterized by $\theta \in \Theta$, which gives a prediction $\hat{y} = f_\theta(\vx)$, and see if $\hat{y}$ and $y$ match.
+
+To do so, we want the \emph{true risk} $R(\theta) = \E_{(\vx, y) \sim \mathcal{D}}(\ell(f_\theta(\vx), y))$ to be low, where $\ell:\mathcal{Y}\times\mathcal{Y}\to \mathbb{R}$ is a deterministic loss function.
+The loss term $\ell\parens{\hat{y}, y}$ measures how our prediction $\hat{y} = f_\theta(\vx)$ differs from the true output $y$. 
+Thus, in machine learning, we want to find the optimal parameters $\theta^\ast$ that minimize this true risk.
+
+However, since $\mathcal{D}$ is unknown, we can not evaluate the expectation appearing in the definition of the true risk.
+Thus, we instead use a surrogate objective called the \emph{empirical risk}, which is an unbiased estimator of the true risk, and minimize it over our training set in order to learn the optimal parameters.
+The empirical risk is defined as follows:
 \[
-L(\theta) = \frac{1}{n}\sum_{i=1}^n \ell(f(x_i; \theta), y_i)
+\hat{R}(\theta) 
+= 
+\frac{1}{m}\sum_{i=1}^m 
+    \ell\parens{
+        f_\theta(\vx^{(i)}), y^{(i)}
+    }
 \]
-represents the loss function for a dataset containing $n$ training examples $(x_1,y_1),\ldots,(x_n,y_n)$. Here, $\ell$ is a deterministic function that determines the distance between a target label $y_i$ and the predicted label $y_i' = f(x_i; \theta)$. In this setting, learning is carried out by performing \emph{empirical risk minimization}, which involves optimizing to find parameters $\theta^\ast \in \argmin_{\theta\in\Theta} L(\theta)$.\\
 
-In the first few lectures, we will dive deeper into the basics and theory of optimization that lie at the heart of machine learning. We will step back from the notation we see in machine learning, and start by considering the most general unconstrained optimization problem\footnote{More generally, this would involve an $\inf$ instead of $\min$, but in this lecture we keep the notation simple and stick with $\min$.} for a real valued function $f:\X\to\R$:
+Thus, in order to find the optimal parameters, we optimize the empirical risk, which we can easily compute from the given training set.
+This procedure is known as \emph{empirical risk minimization}, which is formalized below:
 \[
-\min_{x\in\X} f(x)
+\text{
+Find the optimal parameters $\theta^\ast$ such that $\theta^\ast \in \argmin_{\theta\in\Theta} \hat{R}(\theta)$.
+}
 \]
-In most of our discussions, we will consider $\X$ or $\dom(f)$ to be the $d$-dimensional Euclidean space $\R^d$.\\
 
-The optimization problem formulated above is NP-hard in general (see \cite{bubeck2015convex}. Section 6.6). However, for certain classes of functions $f$, strong theoretical guarantees and efficient optimization algorithms exist. In this lecture, we consider such a class of functions, called \emph{convex functions} and prove convergence guarantees for an algorithm for convex optimization called \emph{gradient descent}.
+In the first few lectures, we will dive deeper into the basics and theory of optimization that lie at the heart of machine learning. 
+We will step back from the notation we see in machine learning, and start by considering the most general unconstrained optimization problem\footnote{More generally, this would involve an $\inf$ instead of $\min$, but in this lecture we keep the notation simple and stick with $\min$.} for a real valued function $f:\X\to\R$:
+\[
+\min_{\vx\in\X} f(\vx)
+\]
+In most of our discussions, we will consider $\X$ or $\dom(f)$ to be the $d$-dimensional Euclidean space $\R^d$.
+
+The optimization problem formulated above is NP-hard in general (see \cite{bubeck2015convex}, section 6.6). 
+However, for certain classes of functions $f$, strong theoretical guarantees and efficient optimization algorithms exist. 
+In this lecture, we derive our first result along this idea-- we consider a class of functions, called \emph{convex functions}, and prove convergence guarantees for an algorithm, called \emph{gradient descent}, for its optimization.
 
 
-\section{Convex optimization}
-
-    This section introduces some concepts in convexity, and then uses them to prove convergence of gradient descent for convex functions.\\
-    
-    Although in practice people commonly use the same algorithms for non-convex optimization as they do for convex optimization (e.g.\ gradient descent), it is important to note that the strong theory for convex optimization algorithms often breaks down without the convexity assumption.
-    However, ideas from convex analysis and the weakening of certain results can give partial guarantees and offer generalizations for non-convex analysis.
-
+\section{Convex analysis}
+\label{sec:convexAnalysis}
+This section introduces some concepts in convexity, and then uses them to prove convergence of gradient descent for convex functions.
+Although, in practice people commonly use the same algorithms for non-convex optimization as they do for convex optimization (e.g.\ gradient descent), it is important to note that the strong theory for convex optimization algorithms often breaks down without the convexity assumption. 
+However, ideas from convex analysis and the weakening of certain results may give partial guarantees and offer generalizations for non-convex analysis.
 
 \subsection{Background}
-
+\label{subsec:convexAnalysis:background}
 \subsubsection{Lipschitz continuity}
-
+\label{subsubsec:convexAnalysis:background:lipschitzContinuity}
 \begin{defn}[Lipschitz continuity]
-Let $L\geq 0$. A real-valued function $f$ is $L$-Lipschitz continuous iff $\forall x,y \in \dom f$,
+Let $L\geq 0$. A real-valued function $f$ is $L$-Lipschitz continuous iff $\forall \vx, \vy \in \dom f$,
 \[
-	\abs{f(x) - f(y)} \leq L\norm{x-y}
+	\abs{f(\vx) - f(\vy)} \leq L\norm{\vx-\vy}
 \]
 \end{defn}
 
@@ -183,7 +219,7 @@ Intuitively, a Lipschitz continuous function is bounded in how fast it can chang
 \begin{figure}[ht]
 \centering
     \includegraphics[width=0.4\textwidth]{figures/Lipschitz.pdf}
-    \caption{Consider a $L_f$-Lipschitz continuous function $f$ and a $L_g$-Lipschitz continuous function $g$. If $f$ and $g$ are changing as fast as they can, then $L_f > L_g$.}
+    \caption{Consider a $L_f$-Lipschitz continuous function $f$ and a $L_g$-Lipschitz continuous function $g$. If $f$ and $g$ are changing as fast as they are allowed, then $L_f > L_g$.}
     \label{fig:lipschitz}
 \end{figure}
 
@@ -191,13 +227,13 @@ Intuitively, a Lipschitz continuous function is bounded in how fast it can chang
 % In this example, |f(x) - f(y)| > |g(x) - g(y)| meaning that the smallest value L_f can take is higher than the smallest value L_g can take. 
 % -------------------
 
-As another example, consider the following function:
+As another example, consider the following function $f:\mathbb{R}\to\mathbb{R}$:
 \[
-    f(x)= 
-\begin{cases}
-    \exp(-\lambda x),& \text{if } x > 0\\
-    1,              & \text{otherwise}
-\end{cases}
+    f(x) = 
+    \begin{cases}
+        \exp(-\lambda x), & \text{if } x > 0\\
+        1,                & \text{otherwise}
+    \end{cases}
 \]
 $f(x)$ here is $L$-Lipschitz, and the value of $L$ increases with $\lambda$.
 As the value of $\lambda$ increases, the function gets closer to discontinuity.
@@ -213,17 +249,20 @@ This function is illustrated in Figure~\ref{fig:lambda}.
     \label{fig:lambda}
 \end{figure}
 
-A Lipschitz continuous function does not need to be differentiable. For example, we can have integer-valued and non-smooth Lipschitz continuous functions. However, a corollary of $f$ being $L$-Lipschitz continuous is that if it is differentiable, the norm of its gradient is bounded by $L$.
+A Lipschitz continuous function does not need to be differentiable. 
+For example, we can have integer-valued and non-smooth Lipschitz continuous functions.
+However, a corollary of $f$ being $L$-Lipschitz continuous is that if it is differentiable, the norm of its gradient is bounded by $L$.
 
 \begin{lemma}[First order condition for Lipschitz continuity]\label{lemma:lip}
     A differentiable function $f$ is $L$-Lipschitz continuous iff the norm of its gradient is bounded by $L$:
     \[
-    \forall x \in \dom(f), \norm{\nabla f(x)} \leq L
+    \forall \vx \in \dom(f), \norm{\nabla f(\vx)} \leq L
     \]
 \end{lemma}{}
 
 \begin{proof}
-We first give the idea in $\R$, then generalize in $\R^d$.\\\\
+We first give the idea in $\R$, then generalize in $\R^d$.
+
 $(\implies)$
 For $\dom(f)\subseteq\R$,
 \begin{align*}
@@ -233,22 +272,31 @@ For $\dom(f)\subseteq\R$,
 
 In general, if $\dom(f)\subseteq \R^d$ for a differentiable $L$-Lipschitz function $f$, then
 \[
-    \norm{\nabla f(x)} \leq L
+    \norm{\nabla f(\vx)} \leq L
 \]
-In fact, let $u\in\mathbb{S}^d$ a unit vector, then the directional derivative with respect to $u$ is given by:
+In fact, let $\vu \in \mathbb{S}^d$ an arbitrary unit vector, then the directional derivative with respect to $\vu$ is given by:
 \begin{align*}
-	\nabla_u f(x) &= \lim_{h\to 0} \frac{f(x+hu)-f(x)}{h} \tag{definition of directional derivative}\\
-	\implies \abs{\nabla_u f(x)} &= \lim_{h\to 0} \frac{\abs{f(x+hu)-f(x)}}{\norm{hu}} \leq L \tag{definition of Lipschitz continuity}
+	\nabla_\vu f(\vx) &= \lim_{h\to 0} \frac{f(\vx+h\vu)-f(\vx)}{h} \tag{definition of directional derivative}\\
+	\implies \abs{\nabla_\vu f(\vx)} &= \lim_{h\to 0} \frac{\abs{f(\vx+h\vu)-f(\vx)}}{\norm{h\vu}} \leq L \tag{definition of Lipschitz continuity}
 \end{align*}
 
-Since  $\nabla_u f(x)=\langle\nabla f(x),u\rangle$, taking $u=\frac{\nabla f(x)}{\norm{\nabla f(x)}} \implies \nabla_u f(x)=\norm{\nabla f(x)}$, thus the result.\\
+Since $\nabla_\vu f(\vx)=\inner{\nabla f(\vx),\vu}$, taking $\vu = \frac{\nabla f(\vx)}{\norm{\nabla f(\vx)}}$ we have
+\begin{align*}
+    \nabla_\vu f(\vx) &= \inner{\nabla f(\vx), \frac{\nabla f(\vx)}{\norm{\nabla f(\vx)}}} \\
+    &= \frac{1}{\norm{\nabla f(\vx)}} \inner{\nabla f(\vx), \nabla f(\vx)} \\
+    &= \frac{1}{\norm{\nabla f(\vx)}} \norm{\nabla f(\vx)}^2 \\
+    &= \norm{\nabla f(\vx)},
+\end{align*}
+thus the result.
 
+$(\impliedby)$ For the sake of contradiction, suppose there exist $\va,\vb\in \dom(f)$ such that $|f\parens{\va}-f\parens{\vb}|>L\norm{\va-\vb}$\hfill$\parens{\ast}$
 
-$(\impliedby)$ By contraposition, suppose there exist $A,B\in \dom(f)$ such that $|f(A)-f(B)|>L\norm{A-B}$.\\
+In the multivariate case, the mean value theorem states that there exists a point $\vc$ in the line segment $\overline{\va\vb}$ such that $f\parens{\va}-f\parens{\vb}= \langle\nabla f\parens{\vc}, \va-\vb \rangle$.
 
-In the multivariate case, the mean value theorem states that there exists a point C in the line segment $\overline{AB}$ such that $f(A)-f(B)= \langle\nabla f(C), A-B \rangle$.\\
-Hence, by Cauchy-Schwarz inequality, $|f(A)-f(B)|\leq \norm{\nabla f(C)} \norm{A-B}$, which implies that $$\norm{\nabla f(C)}\geq \frac{|f(A)-f(B)|}{\norm{A-B}}> L$$.
-
+Hence, by Cauchy-Schwarz inequality, $|f\parens{\va}-f\parens{\vb}|\leq \norm{\nabla f\parens{\vc}} \norm{\va - \vb}$, which contradicts the fact that $f$ is $L$-Lipschitz as follows, thereby rendering the assumption $\parens{\ast}$ false and proving the desired result.
+\[
+    \norm{\nabla f\parens{\vc}} \geq \frac{|f\parens{\va}-f\parens{\vb}|}{\norm{\va-\vb}}> L
+\]
 \end{proof}{}
 
 Note that Lipschitz continuity is a special case of continuity: all Lipschitz continuous functions are continuous, but not all continuous functions are Lipschitz continuous (for more information, see \cite{boyd2004convex}).
@@ -256,20 +304,20 @@ Note that Lipschitz continuity is a special case of continuity: all Lipschitz co
 
 
 \subsubsection{Convex sets}
-
-Before we define convex sets, let us first define a convex combination, which is a constrained version of a linear combination, illustrated in Figure~\ref{fig:two_points} for two points.
+\label{subsubsec:convexAnalysis:background:convexSets}
+Before we define convex sets, let us first define a convex combination, which is a constrained version of a linear combination of two points, which is illustrated in Figure~\ref{fig:two_points}.
 
 \begin{defn}[Convex combination]
-If $z \in \R^d$ is a linear combination of $x_1, x_2,\ldots,x_n \in \R^d$ and the coefficients are non-negative and sum to $1$, then $z$ is a convex combination of $x_1, x_2,\ldots,x_n$:
+If $\vz \in \R^d$ is a linear combination of $\vx^{(1)}, \vx^{(2)},\ldots,\vx^{(n)} \in \R^d$ and the coefficients are non-negative and sum to $1$, then $\vz$ is a convex combination of $\vx^{(1)}, \vx^{(2)},\ldots,\vx^{(n)}$:
 \[
-    z = \sum_{i=1}^n\theta_i x_i, \quad\text{ where } \forall i \in (1,\ldots,n), \theta_i \geq 0 \text{ and } \sum_{i=1}^n \theta_i = 1
+    \vz = \sum_{i=1}^n\theta^{(i)} \vx^{(i)}, \quad\text{where} \forall i \in (1,\ldots,n),\ \theta^{(i)} \geq 0 \text{ and } \sum_{i=1}^n \theta^{(i)} = 1
 \]
 \end{defn}
 
 \begin{figure}[ht]
 \centering
     \includegraphics[width=0.3\textwidth]{figures/line_two_points.pdf}
-    \caption{All convex combinations $z = \theta x + (1-\theta)y$ of two points $x$ and $y$ lie on the line segment from $x$ to $y$. When $\theta=1$, we get $x$ and when $\theta=0$, we get $y$.}
+    \caption{All convex combinations $\vz = \theta \vx + (1-\theta)\vy$ of two points $\vx$ and $\vy$ lie on the line segment from $\vx$ to $\vy$. When $\theta=1$, we get $\vx$ and when $\theta=0$, we get $\vy$.}
     \label{fig:two_points}
 \end{figure}
 
@@ -277,7 +325,7 @@ If $z \in \R^d$ is a linear combination of $x_1, x_2,\ldots,x_n \in \R^d$ and th
 \begin{defn}[Convex set]
 $\X$ is a convex set if the convex combination any two points in $\X$ is also in $\X$. That is, for a convex set $\X$:
 \[
-\forall x,y \in \X, \forall \theta \in  [0, 1],\quad z = \theta x + (1-\theta)y \in \X
+\forall \vx,\vy \in \X, \forall \theta \in  [0, 1],\quad \vz = \theta \vx + (1-\theta)\vy \in \X
 \]
 \end{defn}
 
@@ -290,88 +338,99 @@ Figure~\ref{fig:sets} gives examples of a convex set and a non-convex set.
     \label{fig:sets}
 \end{figure}
 
-
 \subsubsection{Convex functions}
-Armed with the definition of convex sets,
-we can finally define convex functions.
-
+\label{subsubsec:convexAnalysis:background:convexSets}
+Armed with the definition of convex sets, we can finally define convex functions.
 \begin{defn}[Convex function]
-A function $f(x)$ is \emph{convex} iff the domain $\dom(f)$ is a convex set and $\forall x,y \in \dom(f), \forall \theta \in [0,1]$,
+A function $f(\vx)$ is \emph{convex} iff the domain $\dom(f)$ is a convex set and $\forall \vx, \vy \in \dom(f), \forall \theta \in [0,1]$,
 \[
-	f(\theta x+ (1-\theta)y) \leq \theta f(x) + (1-\theta)f(y)
+	f(\theta \vx+ (1-\theta)\vy) \leq \theta f(\vx) + (1-\theta)f(\vy)
 \]
 \label{def:convex}
 \end{defn}
 
-The condition above says that for any two members in the domain of $f$, the function's value on a convex combination does not exceed the convex combination of those values. It can be viewed as a \textit{zeroth order condition}, as it doesn't involve any condition of differentiability of the function. We will see results with higher order conditions later.\\
-Graphically, when $f$ is convex, for any points $x$ and $y$ in $f$'s domain, the chord connecting $f(x)$ and $f(y)$ lies above the function between those points. This is illustrated in Figure~\ref{fig:convex}.\\
+The condition above says that for any two members in the domain of $f$, the function's value on a convex combination does not exceed the convex combination of those values. 
+It can be viewed as a \textit{zeroth order condition}, as it doesn't involve any condition of differentiability of the function. 
+We will see results with higher order conditions later.
 
-For a convex function $f$, its opposite function $-f$ is defined as a \emph{concave} function. In other words, for a concave function, the inequality condition in Definition~\ref{def:convex} is reversed.\\
+Graphically, when $f$ is convex, for any points $\vx$ and $\vy$ in $f$'s domain, the chord connecting $f(\vx)$ and $f(\vy)$ lies above the function between those points. 
+This is illustrated in Figure~\ref{fig:convex}.
+
+For a convex function $f$, its opposite function $-f$ is defined as a \emph{concave} function. 
+In other words, for a concave function, the inequality condition in Definition~\ref{def:convex} is reversed.
 
 \begin{figure}[ht]
 \centering
     \includegraphics[height=0.2\textheight]{figures/convex.pdf}
     \includegraphics[height=0.2\textheight]{figures/quasi-convex.pdf}
-    \caption[]{\textbf{Left:} Example of a convex function. For any two points $x,y \in \dom(f)$, the chord $\theta f(x) + (1-\theta)f(y), \theta \in [0,1]$ lies above the function value $f(\theta x+ (1-\theta)y), \theta \in [0,1]$. \textbf{Right:} Example of a non-convex function\footnotemark[2]. We see here that there exist points $x$ and $y$ for which the chord lies below the curve between $f(x)$ and $f(y)$.}
+    \caption[]{\textbf{Left:} Example of a convex function. 
+    For any two points $x,y \in \dom(f)$, the chord $\theta f(x) + (1-\theta)f(y), \theta \in [0,1]$ lies above the function value $f(\theta x+ (1-\theta)y), \theta \in [0,1]$. 
+    \textbf{Right:} Example of a non-convex function\footnotemark[2]. 
+    We see here that there exist points $x$ and $y$ for which the chord lies below the curve between $f(x)$ and $f(y)$.}
     \label{fig:convex}
 \end{figure}
-\footnotetext[2]{In fact, this is an example of a quasiconvex function $f$, meaning that all sublevel sets $S_\alpha(f)=\{x \mid f(x) \leq \alpha\}$ are convex sets.}
 
-As we can see in Figure \ref{fig:convex}, convexity is not a necessary condition for a function to have a unique global minimum.
+As we can see in Figure \ref{fig:convex}, convexity is not a necessary condition for a function to have a unique global minimum. 
 The right plot shows an example of non-convex function having a unique global minimum.
+
+% Keep this line here to have the footnote text on the same page as the foot note mark. Footnotes in captions are tricky to get right in LaTeX...
+\footnotetext[2]{In fact, this is an example of a quasi-convex function $f$, meaning that all sublevel sets $S_\alpha(f)=\{x \mid f(x) \leq \alpha\}$ are convex sets. Note that the local minima of quasi-convex functions are also global -- this is not a defining property of convex functions!}
 
 
 \subsection{First-order conditions for convexity}
-
+\label{subsec:convexAnalysis:firstOrderConditionsForConvexity}
 We will see that for differentiable and twice differentiable functions, it is possible to define convexity in terms of first- and second-order conditions for convexity.
-Note that all the definitions of convexity are equivalent when the appropriate level of differentiability holds (for more information, see \cite{bubeck2015convex}).
+Note that all the definitions of convexity are equivalent when the appropriate level of differentiability holds (for more information, see~\cite{bubeck2015convex}).
 
 \begin{lemma}[First order condition for convexity]\label{lemma:first}
-A differentiable function $f$ is convex iff $\dom(f)$ is convex and $\forall x, y \in \dom(f)$,
+A differentiable function $f$ is convex iff $\dom(f)$ is convex and $\forall \vx, \vy \in \dom(f)$,
 \[
-	f(y) \geq f(x) + \nabla f(x)^\top(y-x)
+	f(\vy) \geq f(\vx) + \nabla f(\vx)^\top(\vy-\vx)
 \]
 \end{lemma}
 
 \begin{proof}
-$(\implies)$ Suppose f is convex. By definition of a convex function, $\dom(f)$ is convex. Let $x,y\in\dom(f)$ and $\theta\in[0,1]$,
+$(\implies)$ Suppose $f$ is convex. By definition of a convex function, $\dom(f)$ is convex. Let $\vx, \vy \in \dom(f)$ and $\theta\in[0,1]$,
 
 \begin{align*}
-	&  &f((1-\theta)x+ \theta y) \quad &\leq \quad (1-\theta) f(x) + \theta f(y) \tag{definition of convexity}\\
-	&\implies \quad &f(x+\theta (y-x)) \quad &\leq \quad f(x) + \theta (f(y)-f(x))\\
-	&\implies \quad  &\frac{f(x+\theta (y-x)) - f(x)}{\theta} \quad &\leq \quad f(y)-f(x)\\
-	&\implies \quad &\frac{f(x+\theta u) - f(x)}{\theta} \quad  &\leq \quad f(y)-f(x) \tag{$u=y-x$}\\
-	&\implies \quad &\nabla_u f(x) \quad  &\leq \quad f(y)-f(x) \tag{taking $\theta\to 0$}
+	&& f((1-\theta)\vx+ \theta \vy) \quad &\leq \quad (1-\theta) f(\vx) + \theta f(\vy) \tag{definition of convexity}\\
+	&\implies \quad &f(\vx+\theta (\vy-\vx)) \quad &\leq \quad f(\vx) + \theta (f(\vy)-f(\vx))\\
+	&\implies \quad  &\frac{f(\vx+\theta (\vy-\vx)) - f(\vx)}{\theta} \quad &\leq \quad f(\vy)-f(\vx)\\
+	&\implies \quad &\frac{f(\vx+\theta \vu) - f(\vx)}{\theta} \quad  &\leq \quad f(\vy)-f(\vx) \tag{$\vu=\vy-\vx$}\\
+	&\implies \quad &\nabla_\vu f(\vx) \quad & \leq \quad f(\vy)-f(\vx) \tag{taking $\theta\to 0$}
 \end{align*}{}
-Since $\nabla_u f(x)=\langle\nabla f(x),u\rangle=\nabla f(x) ^\top u=\nabla f(x)^\top (y-x)$, the result follows.\\
+Since $\nabla_\vu f(\vx) = \inner{\nabla f(\vx), \vu} = \nabla f(\vx)^\top \vu = \nabla f(\vx)^\top (\vy-\vx)$, the result follows.
 
 $(\impliedby)$
 Suppose $\dom(f)$ is convex and
 \[
-\forall x, y \in \dom(f), f(y) \geq f(x) + \nabla f(x)^\top(y-x)
+\forall \vx, \vy \in \dom(f), f(\vy) \geq f(\vx) + \nabla f(\vx)^\top(\vy-\vx)
 \]
-Let $x,y\in\dom(f), \theta \in [0,1]$.\\
+Let $\vx,\vy\in\dom(f), \theta \in [0,1]$.
 
-By the convexity of $\dom(f)$, $z=\theta x + (1-\theta)y \in \dom(f)$\\
+By the convexity of $\dom(f)$, $\vz = \theta \vx + (1-\theta)\vy \in \dom(f)$\\
 
-Applying the above inequation using $z$: 
+Applying the above inequation using $\vz$: 
 \begin{align}
-    f(x) \geq f(z) + \nabla f(z)^\top(x-z) \label{eq1}\\
-    f(y) \geq f(z) + \nabla f(z)^\top(y-z) \label{eq2}
+    f(\vx) \geq f(\vz) + \nabla f(\vz)^\top(\vx-\vz) \label{eq1}\\
+    f(\vy) \geq f(\vz) + \nabla f(\vz)^\top(\vy-\vz) \label{eq2}
 \end{align}{}
 Multiplying inequation (\ref{eq1}) by $\theta$, inequation (\ref{eq2}) by $1-\theta$ and adding, we get:
 
 \begin{align*}
-    \theta f(x) + (1-\theta) f(y) &\geq \theta(f(z) + \nabla f(z)^\top(x-z))+(1-\theta)(f(z) + \nabla f(z)^\top(y-z))\\
-    &= \theta f(z)+ \nabla f(z)^\top (\theta x - \theta z) +  (1-\theta) f(z)+ \nabla f(z)^\top ((1-\theta) y - (1-\theta) z)\\
-    &= f(z)+ \nabla f(z)^\top (\theta x + (1-\theta)y - z)\\
-    &=f(z)\\
-    &=f(\theta x + (1-\theta)y)
+    \theta f(\vx) + (1-\theta) f(\vy) &\geq \theta(f(\vz) + \nabla f(\vz)^\top(\vx-\vz))+(1-\theta)(f(\vz) + \nabla f(\vz)^\top(\vy-\vz))\\
+    &= \theta f(\vz)+ \nabla f(\vz)^\top (\theta \vx - \theta \vz) +  (1-\theta) f(\vz)+ \nabla f(\vz)^\top ((1-\theta) \vy - (1-\theta) \vz)\\
+    &= f(\vz)+ \nabla f(\vz)^\top (\theta \vx + (1-\theta)\vy - \vz)\\
+    &=f(\vz)\\
+    &=f(\theta \vx + (1-\theta)\vy)
 \end{align*}{}
-    
 \end{proof}{}
 
-Intuitively, this says that for a convex function, a tangent of its graph at any point must lie below the graph. This is illustrated in Figure~\ref{fig:firstorder}.\\
+Intuitively, this says that for a convex function, a tangent of its graph at any point must lie below the graph. 
+This is illustrated in Figure~\ref{fig:firstorder}.
+Another way to look at this result is in terms of approximating the value of the function at point $\vy$ using another point $\vx$.
+Note that the first two terms of the Taylor expansion of $f\parens{\vy}$ evaluated at point $\vx$ are indeed $f\parens{\vx} + \nabla f\parens{\vx}^\top\parens{\vy -\vx}$. 
+Thus, the expression on the RHS of the result is the \emph{linear approximation} of $f$ at point $\vx$ for evaluating $f\parens{\vy}$; the result says that this linear approximation always underestimates the true function value!
 
 \begin{figure}[ht]
 \centering
@@ -382,168 +441,178 @@ Intuitively, this says that for a convex function, a tangent of its graph at any
 \end{figure}
 
 \subsection{First- and second-order conditions for convexity}
+\label{subsec:convexAnalysis:firstAndSecondOrderConditionsForConvexity}
 Before discussing the second-order condition for convexity, let us review the multivariate generalization of a second derivative, namely a \emph{Hessian}:
 \[
-\nabla^2 f(x) = \begin{bmatrix}
-\frac{\partial^2 f}{\partial x_1^2} & \frac{\partial^2 f}{\partial x_1 \partial x_2} & \ldots & \frac{\partial^2 f}{\partial x_1 \partial x_d}\\
-\vdots & \vdots & \ddots & \vdots\\
-\frac{\partial^2 f}{\partial x_d \partial x_1} & \frac{\partial^2 f}{\partial x_d \partial x_2} & \ldots & \frac{\partial^2 f}{\partial x_d^2}
-\end{bmatrix}
+    \nabla^2 f(\vx) = \begin{bmatrix}
+        \frac{\partial^2 f}{\partial \evx_1^2} & \frac{\partial^2 f}{\partial \evx_1 \partial \evx_2} & \ldots & \frac{\partial^2 f}{\partial \evx_1 \partial \evx_d}\\
+        \vdots & \vdots & \ddots & \vdots\\
+        \frac{\partial^2 f}{\partial \evx_d \partial \evx_1} & \frac{\partial^2 f}{\partial \evx_d \partial \evx_2} & \ldots & \frac{\partial^2 f}{\partial \evx_d^2}
+    \end{bmatrix}
 \]
-For a function $f:\R\to\R, f(x) = \frac{h}{2}x^{2}$, the second derivative $f''(x) = h$ corresponds to a measure on how quickly the slope of the function can change. Similarly, the Hessian represents the curvature of a function $f$ with $\dom(f)\subseteq \R^d$. A multivariate quadratic function $f$ can be written as $f(x) = \frac{1}{2}x^\top Hx $, where $H$ is the Hessian. The eigenvalues of the Hessian determine the curvature of the function along its eigenvectors. Consider the eigendecomposition\footnotemark[3]
-\footnotetext[3]{The Schwarz Theorem implies that the Hessian is always a symmetric matrix. Applying the spectral theorem, it can always be decomposed in the mentioned form, with $Q$ an orthogonal matrix, i.e., $Q^{-1}=Q^T$.}
+
+For a function $f:\R\to\R, f(x) = \frac{h}{2}x^{2}$, the second derivative $f''(x) = h$ corresponds to a measure on how quickly the slope of the function can change. Similarly, the Hessian represents the curvature of a function $f$ with $\dom(f)\subseteq \R^d$. A multivariate quadratic function $f$ can be written as $f(\vx) = \frac{1}{2}\vx^\top \mH \vx $, where $\mH$ is the Hessian. The eigenvalues of the Hessian determine the curvature of the function along its eigenvectors. Consider the eigendecomposition\footnotemark[3]
+\footnotetext[3]{The Schwarz theorem implies that the Hessian is always a symmetric matrix. Applying the spectral theorem, it can always be decomposed in the mentioned form, with $\mQ$ an orthogonal matrix, i.e., $\mQ^{-1} = \mQ^\top$.}
 \begin{equation}\label{eigendec}
-	H = Q\Lambda Q^\top
+	\mH = \mQ \mLambda \mQ^\top
 \end{equation}{}
 where
 \[
-  \Lambda = \begin{bmatrix}
-    \lambda_1 & & & \\
-    & \lambda_2 & & \\
-    & & \ddots & \\
-    & & & \lambda_4 \\
-  \end{bmatrix}
+\mLambda = \begin{bmatrix}
+        \lambda^{(1)} & & & \\
+        & \lambda^{(2)} & & \\
+        & & \ddots & \\
+        & & & \lambda^{(d)} \\
+    \end{bmatrix}
 \]
 
-Changing the basis to $Q$, we can focus on the directions described by $Q=[q_{1},q_{2},\ldots,q_{d}]$. Then, along the direction $q_{i}$, we get the curvature $\lambda_{i}$. Figure~\ref{fig:curvature2} illustrates the curvature of a convex quadratic function. Note that not every quadratic functions are convex (see Lemma \ref{second}).
+Changing the basis to $\mQ$, we can focus on the directions described by $\mQ=[\vq^{(1)}, \vq^{(2)}, \ldots, \vq^{(d)}]$. Then, along the direction $\vq^{(i)}$, we get the curvature $\lambda^{(i)}$. Figure~\ref{fig:curvature2} illustrates the curvature of a convex quadratic function. Note that not every quadratic functions are convex (see Lemma \ref{second}).
 
 \begin{figure}[ht]
 \centering
     \includegraphics[align=c,width=0.33\textwidth]{figures/curvature2.pdf}\qquad\qquad
     \includegraphics[align=c,width=0.45\textwidth]{figures/curvature.pdf}
-    \caption[]{\textbf{Left:} Looking along the principle directions of the quadratic function $f(x) = \frac{1}{2}x^\top Hx $, we see that the curve changes faster along $q_1$ than $q_2$. Here\footnotemark[4], $\lambda_1 > \lambda_2$. \textbf{Right:} Cross-sections along $q_1$ and $q_2$, showing that $f$ has higher curvature along $q_1$ than $q_2$.}
-        \label{fig:curvature2}
+    \caption[]{\textbf{Left:} Looking along the principle directions of the quadratic function $f(\vx) = \frac{1}{2} \vx^\top \mH \vx $, we see that the curve changes faster along $\vq^{(1)}$ than $\vq^{(2)}$. Here\footnotemark[4], $\lambda^{(1)} > \lambda^{(2)}$. \textbf{Right:} Cross-sections along $\vq^{(1)}$ and $\vq^{(2)}$, showing that $f$ has higher curvature along $\vq^{(1)}$ than $\vq^{(1)}$.}
+    \label{fig:curvature2}
 \end{figure}
 \footnotetext[4]{Most eigendecomposition algorithms return eigenvalues in non-decreasing order.}
 
 \begin{defn}[Positive semi-definite]
-A symmetric matrix $M\in \R^{d\times d}$ is positive semi-definite if
+A symmetric matrix $\mM \in \R^{d \times d}$ is positive semi-definite if
 \[
-\forall x\in \R^d, x^\top M x \geq 0
+\forall \vx \in \R^d, \vx^\top \mM \vx \geq 0
 \]
-In that case, we will use the notation $M \succeq 0$.
+In that case, we will use the notation $\mM \succeq 0$.
 \end{defn}{}
 
-A positive semi-definite matrix does not necessarily have all positive elements \footnotemark[5]\footnotetext[5]{There exist matrices with all positive entries, that are not positive semi-definite, and there exist positive semi-definite matrices that have negative elements}. However, as we will see in the next theorem, its eigenvalues $\lambda_i$ are non-negative.\\
+A positive semi-definite matrix does not necessarily have all positive elements \footnotemark[5]\footnotetext[5]{There exist matrices with all positive entries, that are not positive semi-definite, and there exist positive semi-definite matrices that have negative elements}. However, as we will see in the next theorem, its eigenvalues $\lambda^{(i)}$ are non-negative.
 
 \begin{thm}[Characterization of a positive semi-definite matrix]
-A symmetric matrix $M\in \R^{d\times d}$ is positive semi-definite iff all its eigenvalues $\lambda_i$ are non-negative: $\forall i \in \{1,\ldots,d\},$
+A symmetric matrix $\mM \in \R^{d \times d}$ is positive semi-definite iff all its eigenvalues $\lambda^{(i)}$ are non-negative: $\forall i \in \{1,\ldots,d\},$
 \[
-    \lambda_i \geq 0
+    \lambda^{(i)} \geq 0
 \]
 \end{thm}{}
 
 \begin{proof}
-Suppose $M\succeq 0$ and denote $v_i$ an eigenvector associated to $\lambda_i$. Then, using the definition of an eigenvalue and eigenvector, we have $\forall i \in \{1,\ldots,d\},$
+Suppose $\mM \succeq 0$ and denote $\vv^{(i)}$ an eigenvector associated to $\lambda^{(i)}$. Then, using the definition of an eigenvalue and eigenvector, we have $\forall i \in \{1,\ldots,d\},$
 \[
-0 \leq v_i^\top M v_i = v_i^\top \lambda_i v_i =\lambda_i \norm{v_i}^2
+0 \leq {\vv^{(i)}}^\top \mM \vv^{(i)} = {\vv^{(i)}}^\top \lambda^{(i)} \vv^{(i)} = \lambda^{(i)} \norm{\vv^{(i)}}^2
 \]
-Hence, $\lambda_i\geq 0$.\\
+Hence, $\lambda^{(i)}\geq 0$.
 
-Suppose $\lambda_i \geq 0$ for $i=1,\ldots,d$. Then, using the eigendecomposition of $M$, $M=Q \Lambda Q^\top$ as mentioned previously in equation (\ref{eigendec}), $\forall x \in \R^d$,
+Suppose $\lambda^{(i)} \geq 0$ for $i=1,\ldots,d$. Then, using the eigendecomposition of $\mM$, $\mM = \mQ \mLambda \mQ^\top$ as mentioned previously in equation (\ref{eigendec}), $\forall \vx \in \R^d$,
 \[
-    x^\top M x = x^\top Q \Lambda \underbrace{Q^\top x}_{y} = y^T \Lambda y = \sum_{i=1}^d \lambda_i y_i^2\geq 0
+    \vx^\top \mM \vx = \vx^\top \mQ \mLambda \underbrace{\mQ^\top \vx}_{\vy} = \vy^\top \mLambda \vy = \sum_{i=1}^d \lambda^{(i)} y_i^2\geq 0
 \]
 \end{proof}
 
 Before stating the second order condition for convexity, we will need a small but useful other lemma.
 
 \begin{lemma}\label{line}
-A function f is convex iff $\dom(f)$ is a convex set and $\forall x, v \in \dom(f)$, the real function $g_{x,v}$ is convex, where
-$$g_{x,v}(t):=f(x+tv)$$
-for all $t\in \R$ such that $x+tv\in\dom(f)$.
+A function $f$ is convex iff $\dom(f)$ is a convex set and $\forall \vx \in \dom(f), \vv \in \R^d$, the real function $g_{\vx,\vv}$ is convex, where
+\[
+g_{\vx,\vv}(t) := f(\vx + t\vv)
+\]
+for all $t\in \R$ such that $\vx + t\vv \in \dom(f)$.
 \end{lemma}{}
 
 \begin{proof}
-$(\implies)$ Suppose $f$ is convex, then by definition of a convex function, $\dom(f)$ is a convex set.\\
+$(\implies)$ Suppose $f$ is convex, then by definition of a convex function, $\dom(f)$ is a convex set.
 
-First, we prove that $\dom(g_{x,v})$ is a convex set.\\
+First, we prove that $\dom(g_{\vx,\vv})$ is a convex set.
 
-$\forall s,t\in \dom(g_{x,v}), \theta\in[0,1]$, we have $x+sv\in\dom(f)$ and $x+tv\in\dom(f)$.\\
+$\forall s,t \in \dom(g_{\vx,\vv}), \theta\in[0,1]$, we have $\vx + s\vv \in \dom(f)$ and $\vx + t\vv\in\dom(f)$.
 
 Hence by convexity of $\dom(f)$,
-\[\theta (x+sv) + (1-\theta)(x+tv)=x+(\theta s + (1-\theta)t)v \in\dom(f)\]
-Therefore, $\theta s + (1-\theta)t\in\dom(g_{x.v})$, which means that $\dom(g_{x,v})$ is a convex set.\\
+\[
+\theta (\vx + s\vv) + (1-\theta)(\vx + t\vv) = \vx + (\theta s + (1-\theta)t)\vv \in\dom(f)
+\]
+Therefore, $\theta s + (1-\theta)t \in \dom(g_{\vx,\vv})$, which means that $\dom(g_{x,v})$ is a convex set.
 
-Let $s,t\in\dom(g_{x,v},\theta\in[0,1]$, we have :
+Let $s,t\in\dom(g_{\vx,\vv}),\theta\in[0,1]$, we have :
 \begin{align*}
-g_{x,v}(\theta s+(1-\theta) t) &=\quad f(x+(\theta s+(1-\theta) t)v)\\
-&=\quad f(\theta(x+sv)+(1-\theta)(x+tv))\\
-&\leq\quad \theta f(x+sv) + (1-\theta)f(x+tv)\\
-&=\quad\theta g_{x,v}(s) + (1-\theta)g_{x,v}(t) 
+    g_{\vx,\vv}(\theta s+(1-\theta) t) &= \quad f(\vx + (\theta s+(1-\theta) t)\vv)\\
+    &= \quad f(\theta(\vx+s\vv)+(1-\theta)(\vx+t\vv))\\
+    &\leq \quad \theta f(\vx+s\vv) + (1-\theta)f(\vx+t\vv)\\
+    &= \quad\theta g_{\vx,\vv}(s) + (1-\theta)g_{\vx,\vv}(t) 
 \end{align*}
 
-Hence, $g_{x,y}$ is convex.\\
+Hence, $g_{\vx,\vv}$ is convex.
 
-$(\impliedby)$ By contraposition, suppose $f$ is not convex and $\dom(f)$ is a convex set. Then, $\exists a,b \in \dom(f), \theta \in [0,1]$ such that $$f(\theta a + (1-\theta)b)>\theta f(a) + (1-\theta)f(b)$$
+$(\impliedby)$ For the sake of contradiction, suppose $f$ is not convex and $\dom(f)$ is a convex set. 
+Then, $\exists \va,\vb \in \dom(f), \theta \in [0,1]$ such that \[
+    f(\theta \va + (1-\theta)\vb)>\theta f(\va) + (1-\theta)f(\vb)
+    \qquad\qquad \ldots\parens{\ast}
+\]
 Therefore,
 \[
- g_{a,b-a}(\theta) = f(a+\theta (b-a)) = f(\theta b + (1-\theta)a) > \theta f(a) + (1-\theta)f(b)=\theta g_{a,b-a}(0) + (1-\theta) g_{a,b-a}(1)
+ g_{\vb,\va-\vb}(\theta) = f(\vb + \theta(\va-\vb)) = f(\theta\va + (1-\theta)\vb) > \theta f(\va) + (1-\theta)f(\vb) = \theta g_{\vb,\va-\vb}(1) + (1-\theta) g_{\vb,\va-\vb}(0)
 \]
-Hence, $g_{a,b-a}$ is not convex.
-
+Hence, $g_{\va,\vb-\va}$ is not convex, a contradiction.
+Thus, the assumption $\parens{\ast}$ is false, giving the desired result.
 \end{proof}{}
 
-The Lemma \ref{line} gives us an equivalence between the convexity of a function in $\R^d$ and the convexity of this function along any line. It will be very helpful in the next proof, as it allows us to derive results in $\R^d$ from results in $\R$.\\
+Lemma \ref{line} gives us an equivalence between the convexity of a function in $\R^d$ and the convexity of this function along any line. It will be very helpful in the next proof, as it allows us to derive results in $\R^d$ from results in $\R$.
 
 \begin{lemma}[Second order condition for convexity]\label{second}
-A twice differentiable function $f$ is convex iff $\dom(f)$ is a convex set and $\forall x\in\dom(f)$,
+A twice differentiable function $f$ is convex iff $\dom(f)$ is a convex set and $\forall \vx \in \dom(f)$,
 \[
-\nabla^{2}f(x)\succeq 0
+\nabla^{2}f(\vx)\succeq 0
 \]
 \end{lemma}
 
 \begin{proof}\cite{hall2016}
 We begin the proof with the case where $\dom(f)\subseteq\R$ and then generalize for $\dom(f)\subseteq\R^d$\\
 
-Let's suppose $\dom(f)\subseteq\R$. First, notice that the positive semi-definite condition in $\R$ is simply a non-negative condition.\\
+Let's suppose $\dom(f)\subseteq\R$. First, notice that the positive semi-definite condition in $\R$ is simply a non-negative condition.
 
-$(\implies)$\quad If f is convex, then by Lemma \ref{lemma:first}, $\forall x\in\dom(f), h>0$:
+$(\implies)$\quad If $f$ is convex, then by Lemma \ref{lemma:first}, $\forall x\in\dom(f), h>0$:
 \[
     f(x+h)-f(x)\geq f'(x)h \quad \text{and}\quad f(x)-f(x+h) \geq f'(x+h)(-h)
 \]
-Hence, $f'(x+h)\geq \frac{f(x+h)-f(x)}{h}\geq f'(x)$, which means that $f'$ is non-decreasing, hence $f''$ is non-negative.\\
+Hence, $f'(x+h)\geq \frac{f(x+h)-f(x)}{h}\geq f'(x)$, which means that $f'$ is non-decreasing, hence $f''$ is non-negative.
 
-$(\impliedby)$\quad Suppose $f"$ is non-negative. By Taylor's theorem of order 2, we have $\forall x,y \in \dom(f), \exists z\in [x,y]$ such that:
+$(\impliedby)$\quad Suppose $f''$ is non-negative. By Taylor's theorem of order 2, we have $\forall x,y \in \dom(f), \exists z\in [x,y]$ such that:
 \[
-    f(y)=f(x)+f'(x)(y-x)+\frac{1}{2}f"(z)(y-x)^2
+    f(y)=f(x)+f'(x)(y-x)+\frac{1}{2}f''(z)(y-x)^2
 \]
 
-Therefore, $f(y)\geq f(x)+f'(x)(y-x)$, which is the first order condition of convexity.\\
+Therefore, $f(y)\geq f(x)+f'(x)(y-x)$, which is the first order condition of convexity.
 
-Now let's move on to the general case, where $\dom(f)\subseteq\R^d$.\\
+Now let's move on to the general case, where $\dom(f)\subseteq\R^d$.
 
-Applying Lemma \ref{line}, $f$ is convex iff $\forall x\in\dom(f),v\in\R^d$, the real function $g_{x,v}$, defined by $g_{x,v}(t)=f(x+t v)$ for $t$ such that $x+tv\in\dom(f)$, is convex.
+Applying Lemma \ref{line}, $f$ is convex iff $\forall \vx \in \dom(f), \vv \in \R^d$, the real function $g_{\vx,\vv}$, defined by $g_{\vx,\vv}(t) = f(\vx+t\vv)$ for $t$ such that $\vx+t\vv \in \dom(f)$, is convex.
 By the above proof in $\R$, this is true iff
 \[
-g_{x,v}''(t)=v^\top \nabla^2f(x+tv) v \geq 0
+    g_{\vx,\vv}''(t) = \vv^\top \nabla^2 f(\vx+t\vv) \vv \geq 0
 \]
-Since this is for all $v\in\R^d, x+tv \in\dom(f)$, by taking $t=0$, we can see that it is equivalent to $\nabla^2 f(x)\succeq 0, \forall x\in\dom(f)$.
-
+Since this is for all $\vv \in \R^d, \vx+t\vv \in \dom(f)$, by taking $t=0$, we can see that it is equivalent to $\nabla^2 f(\vx)\succeq 0, \forall \vx \in \dom(f)$.
 \end{proof}{}
-The Lemma states that for a twice differentiable function to be convex, its Hessian must be positive semi-definite.
- \\
 
-In general, for any non-negative eigenvalue of the Hessian, the curvature of the function is non-negative along the corresponding eigenvector, and thus the function is convex in that direction. On the other hand, a non-positive eigenvalue represents non-positive curvature along the eigenvector, and the function is concave in that direction. Then, we can see that for a function to be convex, it has to have non-negative curvature, and thus non-negative eigenvalues, in all directions.
+In general, for any non-negative eigenvalue of the Hessian, the curvature of the function is non-negative along the corresponding eigenvector, and thus the function is convex in that direction. 
+On the other hand, a non-positive eigenvalue represents non-positive curvature along the eigenvector, and the function is concave in that direction. 
+Then, we can see that for a function to be convex, it has to have non-negative curvature, and thus non-negative eigenvalues, in all directions.
 
 
 \subsection{Gradient descent}
 
 We will now study our first optimization method.
-Gradient descent is an iterative optimization algorithm that starts from an initial point, and moves in the direction of the steepest descent. This makes the algorithm especially useful for convex optimization, since for a convex function, any local minimum is also a global minimum. It can be proved that this direction we're looking for is given by the opposite of the gradient, hence the name of the algorithm.\\
+Gradient descent is an iterative optimization algorithm that starts from an initial point, and moves in the direction of the steepest descent. 
+This makes the algorithm especially useful for convex optimization, since for a convex function, any local minimum is also a global minimum. 
+It can be proved that this direction we're looking for is given by the opposite of the gradient, hence the name of the algorithm.
 
-Specifically, starting from an initial guess $x_1$, the algorithm generates the sequence $x_1, x_2, ..., x_T \in \mathbb{R}^d$ to approach the minimum of a differentiable function $f:\R^d\to\R$ using the following update rule:
+Specifically, starting from an initial guess $\vx^{(1)}$, the algorithm generates the sequence $\vx^{(1)}, \vx^{(2)}, ..., \vx^{(T)} \in \mathbb{R}^d$ to approach the minimum of a differentiable function $f:\R^d\to\R$ using the following update rule:
 \[
-x_{k+1} = x_k - \gamma \nabla f(x_k),
+    \vx^{(k+1)} = x^{(k)} - \gamma \nabla f(\vx^{(k)}),
 \]
 
-Here, $\gamma$ is called the \emph{step size}, also known as the \emph{learning rate} in the machine learning literature.
-If $f$ is convex and $\gamma$ decays at an appropriate rate, then it is guaranteed that as $T \to \infty$, $x_T \to x^\ast$, where $x^\ast \in \argmin_{x\in\dom(f)} f(x)$ is an optimal value.\\
+Here, $\gamma$ is called the \emph{step size}, also known as the \emph{learning rate} in the machine learning literature. If $f$ is convex and $\gamma$ decays at an appropriate rate, then it is guaranteed that as $T \to \infty$, $\vx^{(T)} \to \vx^\ast$, where $\vx^\ast \in \argmin_{\vx\in\dom(f)} f(\vx)$ is an optimal value.
 
 \begin{lemma}
 If $f$ is a $L$-Lipschitz continuous differentiable function, then
 \[
-\norm{\nabla f(x_k)}_2^2 \leq L^2.
+\norm{\nabla f(\vx^{(k)})}_2^2 \leq L^2.
 \]
 \label{lemma:lipschitz}
 \end{lemma}
@@ -553,11 +622,11 @@ See Lemma \ref{lemma:lip}.
 \begin{thm}
 Let $f$ be convex and $L$-Lipschitz continuous\footnotemark[6]. If we take $T$ steps of gradient descent with the step size
 \[
-\gamma = \frac{\norm{x_1 - x^\ast}_2}{L \sqrt{T}}
+\gamma = \frac{\norm{{\vx}^{(1)} - {\vx}^\ast}_2}{L \sqrt{T}}
 \]
 Then the following holds:
 \[
-f\left(\frac{1}{T}\sum_{k=1}^T x_k\right) - f(x^\ast) \leq \frac{\norm{x_1 - x^\ast}L}{\sqrt{T}}
+f\parens{\frac{1}{T}\sum_{k=1}^T {\vx}^{(k)}} - f({\vx}^\ast) \leq \frac{\norm{{\vx}^{(1)} - {\vx}^\ast}L}{\sqrt{T}}
 \]
 \rightline{(see \cite{bubeck2015convex}. Theorem 3.2)}
 \end{thm}
@@ -566,47 +635,61 @@ f\left(\frac{1}{T}\sum_{k=1}^T x_k\right) - f(x^\ast) \leq \frac{\norm{x_1 - x^\
 \begin{proof}
 Using the first order condition of convexity and rearranging terms, we can write:
 \begin{align*}
-f(x_k)-f(x^\ast) &\leq \inprod{\nabla f(x_k), x_k-x^\ast}\\
-&= \Biginprod{\frac{1}{\gamma}(x_k-x_{k+1}), x_k-x^\ast} \tag{using gradient descent update rule}\\
-&= \frac{1}{2\gamma} \left(-\norm{x_k-x_{k+1}-(x_k-x^\ast)}_2^2 + \norm{x_k-x_{k+1}}_2^2 + \norm{x_k-x^\ast}_2^2\right) \tag{using $\norm{a-b}^2 = \norm{a}^2+\norm{b}^2-2\inprod{a,b}$ and rearranging terms}\\
-&= \frac{1}{2\gamma} \left(-\norm{x_{k+1}-x^\ast}_2^2 + \norm{\gamma\nabla f(x_k)}_2^2 + \norm{x_k-x^\ast}_2^2\right) \tag{using gradient descent update rule}\\
-&= \frac{1}{2\gamma} \left(\norm{x_k-x^\ast}_2^2-\norm{x_{k+1}-x^\ast}_2^2\right) + \frac{\gamma}{2}\norm{\nabla f(x_k)}_2^2
+    f(\vx^{(k)})-f(\vx^\ast) &\leq \inner{\nabla f(\vx^{(k)}), \vx^{(k)}-\vx^\ast} \\
+    &= \inner{\frac{1}{\gamma}(\vx^{(k)}-\vx^{(k+1)}), \vx^{(k)}-\vx^\ast} \tag{using gradient descent update rule} \\
+    &= \frac{1}{2\gamma} \parens{-\norm{\vx^{(k)}-\vx^{(k+1)}-(\vx^{(k)}-\vx^\ast)}_2^2 + \norm{\vx^{(k)}-\vx^{(k+1)}}_2^2 + \norm{\vx^{(k)}-\vx^\ast}_2^2} \tag{using $\norm{\va-\vb}^2 = \norm{\va}^2 + \norm{\vb}^2 - 2\inner{\va,\vb}$ and rearranging terms} \\
+    &= \frac{1}{2\gamma} \parens{-\norm{\vx^{(k+1)}-\vx^\ast}_2^2 + \norm{\gamma\nabla f(\vx^{(k)})}_2^2 + \norm{\vx^{(k)}-\vx^\ast}_2^2} \tag{using gradient descent update rule}\\
+    &= \frac{1}{2\gamma} \parens{\norm{\vx^{(k)} - \vx^\ast}_2^2 - \norm{\vx^{(k+1)} - \vx^\ast}_2^2} + \frac{\gamma}{2}\norm{\nabla f(\vx^{(k)})}_2^2
 \end{align*}
 Using Lemma~\ref{lemma:lipschitz}, we can thus write:
 \begin{align}
-f(x_k)-f(x^\ast) &\leq \frac{1}{2\gamma} \left(\norm{x_k-x^\ast}_2^2-\norm{x_{k+1}-x^\ast}_2^2\right) + \frac{\gamma}{2}L^2 \label{eq:intermediate}
+    f(\vx^{(k)})-f(\vx^\ast) &\leq \frac{1}{2\gamma} \parens{\norm{\vx^{(k)} - \vx^\ast}_2^2 - \norm{\vx^{(k+1)} - \vx^\ast}_2^2} + \frac{\gamma}{2}L^2 \label{eq:intermediate}
 \end{align}
 
-Let us now perform the change of variables by defining $D_k = \norm{x_k-x^\ast}$. Then, from Equation~\ref{eq:intermediate}, we have:
+Let us now perform the change of variables by defining $D_k = \norm{\vx^{(k)}-\vx^\ast}$. Then, from Equation~\ref{eq:intermediate}, we have:
 \begin{align*}
-f(x_1) - f(x^\ast) &\leq \frac{1}{2\gamma} \left(D_1^2 - D_2^2\right) + \frac{\gamma}{2}L^2\\
-f(x_2) - f(x^\ast) &\leq \frac{1}{2\gamma} \left(D_2^2 - D_3^2\right) + \frac{\gamma}{2}L^2\\
+f(\vx^{(1)}) - f(\vx^\ast) &\leq \frac{1}{2\gamma} \parens{D_1^2 - D_2^2} + \frac{\gamma}{2}L^2\\
+f(\vx^{(2)}) - f(\vx^\ast) &\leq \frac{1}{2\gamma} \parens{D_2^2 - D_3^2} + \frac{\gamma}{2}L^2\\
 &\vdots\\
-f(x_{T-1}) - f(x^\ast) &\leq \frac{1}{2\gamma} \left(D_{T-1}^2 - D_T^2\right) + \frac{\gamma}{2}L^2\\
-f(x_T) - f(x^\ast) &\leq \frac{1}{2\gamma} \left(D_T^2 - D_{T+1}^2\right) + \frac{\gamma}{2}L^2 \leq \frac{1}{2\gamma} D_T^2 + \frac{\gamma}{2}L^2
+f(\vx^{(T-1)}) - f(\vx^\ast) &\leq \frac{1}{2\gamma} \parens{D_{T-1}^2 - D_T^2} + \frac{\gamma}{2}L^2\\
+f(\vx^{(T)}) - f(\vx^\ast) &\leq \frac{1}{2\gamma} \parens{D_T^2 - D_{T+1}^2} + \frac{\gamma}{2}L^2 \leq \frac{1}{2\gamma} D_T^2 + \frac{\gamma}{2}L^2
 \end{align*}
 
 Adding all the terms above, we get a telescopic sum where most of the $D_k$ terms cancel. We get:
+\begin{multline}
+\sum_{k=1}^T \parens{f(\vx^{(k)})-f(\vx^\ast)} \leq 
+\frac{1}{2\gamma} D_1^2 + \frac{T\gamma L^2}{2}
+-
+\frac{1}{2\gamma} D_{T + 1}^2 
+\leq 
+\frac{1}{2\gamma} D_1^2 + \frac{T\gamma L^2}{2}
+\\
+\implies {} 
+\parens{\frac{1}{T}\sum_{k=1}^T f(\vx^{(k)})}-f(\vx^\ast) \leq \frac{1}{2\gamma T} D_1^2 + \frac{\gamma L^2}{2}
+\qquad\qquad\qquad\qquad
+\label{eq:intermediate2}
+\end{multline}
+
+Since $f$ is convex, Jensen's inequality tells us that $f\parens{\frac{1}{T}\sum_{k=1}^T \vx^{(k)}} \leq \frac{1}{T}\sum_{k=1}^T f(\vx^{(k)})$. Thus, we can rewrite Equation~\ref{eq:intermediate2} as:
 \begin{align}
-\sum_{k=1}^T \left(f(x_k)-f(x^\ast)\right) &\leq \frac{1}{2\gamma} D_1^2 + \frac{T\gamma L^2}{2}\notag\\
-\implies \left(\frac{1}{T}\sum_{k=1}^T f(x_k)\right)-f(x^\ast) &\leq \frac{1}{2\gamma T} D_1^2 + \frac{\gamma L^2}{2}\label{eq:intermediate2}
+f\parens{\frac{1}{T}\sum_{k=1}^T \vx^{(k)}}-f(\vx^\ast) &\leq \frac{1}{2\gamma T} D_1^2 + \frac{\gamma L^2}{2} \label{eq:pregamma}
 \end{align}
 
-Since $f$ is convex, Jensen's inequality tells us that $f\left(\frac{1}{T}\sum_{k=1}^T x_k\right) \leq \frac{1}{T}\sum_{k=1}^T f(x_k)$. Thus, we can rewrite Equation~\ref{eq:intermediate2} as:
-\begin{align}
-f\left(\frac{1}{T}\sum_{k=1}^T x_k\right)-f(x^\ast) &\leq \frac{1}{2\gamma T} D_1^2 + \frac{\gamma L^2}{2} \label{eq:pregamma}
-\end{align}
-
-Plugging in $\gamma=\frac{\norm{x_1 - x^\ast}_2}{L \sqrt{T}}$ gives us the result
+Plugging in $\gamma=\frac{\norm{\vx^{(1)} - \vx^\ast}_2}{L \sqrt{T}}$ gives us the result
 \begin{align*}
-f\left(\frac{1}{T}\sum_{k=1}^T x_k\right) - f(x^\ast) &\leq \frac{\norm{x_1 - x^\ast}L}{\sqrt{T}}
+f\parens{\frac{1}{T}\sum_{k=1}^T \vx^{(k)}} - f(\vx^\ast) &\leq \frac{\norm{\vx^{(1)} - \vx^\ast}L}{\sqrt{T}}
 \end{align*}
 \end{proof}
 
-To understand how we derived the optimal $\gamma$ in the above theorem, notice that the RHS of Equation~\ref{eq:pregamma} is a convex function of $\gamma$ in the domain $\R_{\geq 0}$. The minimizing $\gamma$ would give us the tightest bound, which can be found analytically using convexity by setting the gradient to zero and solving for $\gamma$.\\
+To understand how we derived the optimal $\gamma$ in the above theorem, notice that the RHS of Equation~\ref{eq:pregamma} is a convex function of $\gamma$ in the domain $\R_{\geq 0}$. 
+The minimizing $\gamma$ would give us the tightest bound, which can be found analytically using convexity by setting the gradient to zero and solving for $\gamma$.
+One can also arrive at the same bound by using the AM-GM inequality: the RHS of~\ref{eq:pregamma} is the arithmetic mean of two non-negative reals $a = \frac{1}{\gamma T} D_1^2$ and $b = \gamma L^2$.
+Thus, the minimum value of the AM is given by the GM of $a$ and $b$: $\sqrt{ab} = \frac{D_1 L}{\sqrt{T}}$, which is the expression on the RHS of the final result!
+This minimum is in fact attained iff $a = b$, which gives: $\frac{1}{\gamma T} D_1^2 = \gamma L^2\implies \gamma = \frac{D_1}{L\sqrt{T}} = \frac{\norm{\vx^{(1)} - \vx^\ast}_2}{L \sqrt{T}}$.
 
-The convergence rate we derived here for gradient descent is $O(1/\sqrt{T})$, which is quite slow. We will see in the following lectures how stronger assumptions on the function $f$ can guarantee significantly faster convergence rates for gradient descent. However, we obtain a convergence in average, which is very useful for some type of functions, such as the ones that are not differentiable at their minimum.
-
+The convergence rate we derived here for gradient descent is $\mathcal{O}\parens{\frac{1}{\sqrt{T}}}$, which turns out to quite slow!
+We will see in the following lectures how stronger assumptions on the function $f$ can guarantee significantly faster convergence rates for gradient descent. 
+However, we obtain a convergence in average, which is very useful for some type of functions, such as the ones that are not differentiable at their minimum.
 
 
 \section*{Suggested exercises}
