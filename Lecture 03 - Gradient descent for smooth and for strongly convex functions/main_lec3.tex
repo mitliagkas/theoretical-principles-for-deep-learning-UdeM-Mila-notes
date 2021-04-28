@@ -12,6 +12,8 @@
 \usepackage{xspace} % Correct macro spacing
 \usepackage[numbers]{natbib} % For citations
 \usepackage{times}
+\usepackage{booktabs}
+\usepackage{lscape}
 \usepackage{graphicx,subfigure}
 %\usepackage[small,bf]{caption}
 \usepackage{algorithm,algorithmic} 
@@ -23,7 +25,7 @@
 \lhead{This is my name}
 \rhead{this is page \thepage}
 \usepackage[table,xcdraw]{xcolor}
-\usepackage{pgfplots}
+%\usepackage{pgfplots}
 \usepackage{tabularx}
 \usepackage{fancyhdr}
 \pagestyle{fancy}
@@ -40,6 +42,9 @@
 
 
 \usepackage{amsmath}
+
+\usepackage{import}
+\import{../utils/}{macros.tex}
 
 \DeclareMathOperator*{\argmax}{\arg\max}
 \DeclareMathOperator*{\argmin}{\arg\min}
@@ -59,10 +64,10 @@
 \DeclareMathOperator*{\tr}{tr}
 \DeclareMathOperator*{\prox}{prox}
 \DeclareMathOperator*{\conv}{conv}
-\DeclareMathOperator*{\dom}{dom}
+%\DeclareMathOperator*{\dom}{dom}
 \DeclareMathOperator*{\minimize}{minimize}
 \DeclareMathOperator*{\maximize}{maximize}
-\DeclareMathOperator*{\sign}{sign}
+%\DeclareMathOperator*{\sign}{sign}
 \DeclareMathOperator*{\vecop}{vec}
 \DeclareMathOperator*{\Poisson}{Poisson}
 \DeclareMathOperator*{\Cat}{Cat}
@@ -74,14 +79,14 @@
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\X}{\mathcal{X}}
 
-\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
-\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+%\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+%\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
 \DeclarePairedDelimiter{\inprod}{\langle}{\rangle}
 \DeclarePairedDelimiter{\biginprod}{\big\langle}{\big\rangle}
 \DeclarePairedDelimiter{\Biginprod}{\Big\langle}{\Big\rangle}
 \DeclarePairedDelimiter{\bigginprod}{\bigg\langle}{\bigg\rangle}
 \DeclarePairedDelimiter{\Bigginprod}{\Bigg\langle}{\Bigg\rangle}
-\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+%\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
 
 \definecolor{shadethmcolor}{HTML}{F0F0F0}
 %\definecolor{shadethmcolor}{HTML}{EDEDED}
@@ -147,18 +152,17 @@ Please report any bugs to the scribes or instructor.
 
 \section{Summary}
 
-In the previous lecture we covered the notions of convexity as well as Lipschitsz continuity. After introducing these concepts, a bound on the convergence rate of gradient descent of a convex and $L$-Lipschitz function was demonstrated to scale with the $\sqrt{T}$.
-\\
+In the previous lecture we covered the notions of convexity as well as Lipschitsz continuity. 
+After introducing these concepts, a bound on the convergence rate of gradient descent of a convex and $L$-Lipschitz function was demonstrated to scale with the $\sqrt{T}$; we proved that the upper bound on thee \emph{sub-optimality gap} was $\mathcal{O}\parens{\frac{1}{\sqrt{T}}}$.
 
-Building on some of the previous lecture notions, we will introduce guarantees on the convergence rate of gradient descent for a stronger family of functions (using stronger assumptions), namely $\beta$-smooth and $\alpha$-strong convex functions.
-\\
+In this lecture, we build on some of the notions from the previous lecture and introduce guarantees on the convergence rate of gradient descent for a stronger family of functions (using stronger assumptions), namely $\beta$-smooth and $\lambda$-strongly convex functions.
 
 \section{Gradient Descent for smooth functions}
-
+\label{sec:gradient}
 \begin{defn}[$\beta$-smoothness]
 We say that a continuously differentiable function $f$ is $\beta$-smooth if its gradient $\nabla f$ is $\beta$-Lipschitz, that is 
 \[
-	\| \nabla f(x) - \nabla f(y)\| \leq \beta \| x-y \|
+	\norm{\nabla f(\vx) - \nabla f(\vy)} \leq \beta \norm{\vx-\vy}.
 \]
 \end{defn}
 If we recall Lipschitz continuity from Lecture 2, simply speaking, an \textit{L-}Lipschitz function is limited by how \textit{quickly} its output can change. By imposing this same constraint on the gradients of a function, $\beta$-smoothness implies they cannot change abruptly and must be bounded by some value as defined above.
@@ -171,7 +175,13 @@ If we recall Lipschitz continuity from Lecture 2, simply speaking, an \textit{L-
 %     \label{str_convex}
 % \end{figure}
 
-In other other words, $\beta$-smoothness is putting an upper bound on the curvature of the function. This is equivalent to the eigenvalues of the Hessian being less than $\beta$. Note that there can be $\beta$-smooth functions which are not twice differentiable. One key benefit of these functions is that their gradients tend to decay when $x$ gets closer to the minimum. In contrast, non-smooth functions may have abrupt bends at the minimum, which cause significant oscillations for gradient descent. Figure \ref{fig:gradient_updates} illustrates this point by comparing the two scenarios.
+In other other words, $\beta$-smoothness is putting an upper bound on the curvature of the function. 
+This is equivalent to the eigenvalues of the Hessian being less than $\beta$. 
+Note that there can be $\beta$-smooth functions which are not twice differentiable. 
+One key benefit of these functions is that their gradients tend to decay when $\vx$ gets closer to the minimum. 
+In contrast, non-smooth functions may have abrupt bends at the minimum, which cause significant oscillations for gradient descent. Figure \ref{fig:gradient_updates} illustrates this point by comparing the two scenarios.
+This super-nice property of smooth functions results in the \emph{self-tuning property}; we do \emph{not} need to tune the step-size with updates, or pre-define it based on the total number of updates as we did in the last lecture, in order to make gradient descent work! 
+
 \begin{figure}[ht]
 \centering
     \includegraphics[width=0.87\textwidth]{gradient_swing_legends.png}%
@@ -185,86 +195,198 @@ In other other words, $\beta$-smoothness is putting an upper bound on the curvat
 Here we introduce a bound on the convergence rate of a convex and $\beta$-smooth function.
 
 \begin{lemma}[Quadratic bounds]\label{lemma:smooth-sandwich}
-	Let $f$ be $\beta$-smooth on $\mathbb{R}^n$. Then for any $x,y$ $\in \mathbb{R}^n$, one has
-     \begin{equation} \label{eq:lemma34}
-	|f(x) - f(y) - \nabla f(y)^\intercal (x-y) | \leq \dfrac{\beta}{2} \| x-y \|^2
-    \end{equation}
+Let $f$ be $\beta$-smooth on $\mathbb{R}^n$. Then for any $\vx,\vy \in \mathbb{R}^n$, one has
+\begin{equation} \label{eq:lemma34}
+	\abs{f(\vx) - f(\vy) - \nabla f(\vy)^\top (\vx-\vy)} \leq \frac{\beta}{2} \norm{\vx-\vy}^2.
+\end{equation}
 %See \cite{bubeck2015convex} Lemma 3.4 for proof.
 \end{lemma}
+\begin{proof} Let $g: \mathbb{R}\to \mathbb{R}$ be the function defined as: $g(t) = f(\vy+t(\vx-\vy))$. Then, the following holds true:
+\[
+    f(\vx)=g(1)  \text{ and }  f(\vy) = g(0).
+\]
 
-\begin{proof} Let $g: \mathbb{R}\to \mathbb{R}$ by the rule $g(t) \triangleq f(y+t(x-y))$. The following holds true:
-$$f(x)=g(1) \: and \: f(y) = g(0)$$
-
-Then, we also observe that:
+Then, from the fundamental theorem of calculus, we observe that
 \begin{equation} \label{eq:gtintegral}
-f(x) - f(y) = g(1) - g(0) = \int_{0}^{1}g'(t) \, dt 
+    f(\vx) - f(\vy) = g(1) - g(0) = \int_{0}^{1}g'(t) \, dt .
 \end{equation}
 Taking derivative of $g(t):$
-
 \begin{equation} \label{eq:gtderivative}
-g'(t) = \nabla f(y+t(x-y))^T (x-y)
+    g'(t) = \nabla f(\vy+t(\vx-\vy))^\top (\vx-\vy).
 \end{equation}
-
 Plugging in Equation \ref{eq:gtintegral}, and \ref{eq:gtderivative} to the LHS of \ref{eq:lemma34}:
-
 \begin{align*}
-	&	|f(x) - f(y) - \nabla f(y)^\intercal (x-y) |&\\
-	&= |\int_{0}^{1} \nabla f(y+t(x-y))^\intercal (x-y) \, dt - \nabla f(y)^\intercal (x-y) |\\
-	&\leq \int_{0}^{1} |\nabla f(y+t(x-y)-\nabla f(y))^\intercal (x-y)|\, dt\\
-	&\leq \int_{0}^{1} \|\nabla f(y+t(x-y))-\nabla f(y)\| \cdot \|x-y \|  \, dt \tag{applying Cauchy–Schwarz inequality  } \\
-	&\leq \int_{0}^{1} \beta t|x-y \|^2  \, dt \tag{the gradient $\nabla f$ is $\beta$  -Lipschitz.} \\
-	&= \frac{\beta}{2}\|x-y\|^2 \,
+	& \abs{f(\vx) - f(\vy) - \nabla f(\vy)^\top (\vx-\vy)} &\\
+	&= \abs{\int_{0}^{1} \nabla f(\vy+t(\vx-\vy))^\top (\vx-\vy) \, dt - \nabla f(\vy)^\top (\vx-\vy)} \\
+	&\leq \int_{0}^{1} \abs{\nabla f(\vy+t(\vx-\vy)-\nabla f(\vy))^\top (\vx-\vy)} \, dt \\
+	&\leq \int_{0}^{1} \norm{\nabla f(\vy+t(\vx-\vy))-\nabla f(\vy)} \cdot \norm{\vx-\vy}  \, dt \tag{applying Cauchy–Schwarz inequality  } \\
+	&\leq \int_{0}^{1} \beta t\norm{\vx-\vy}^2 \, dt \tag{the gradient $\nabla f$ is $\beta$  -Lipschitz.} \\
+	&= \frac{\beta}{2}\norm{\vx-\vy}^2
 \end{align*}{}
-
-
 \end{proof}
-
+\noindent Intuitively, the quadratic bound from Lemma~\ref{lemma:smooth-sandwich} tells us by how much the linear approximation of a smooth function is allowed to go off!
+Note that the expression, $f(\vx) - f(\vy) - \nabla f(\vy)^\top (\vx-\vy)$ is the error in estimating the value of $f$ at point $\vx$ using the linear approximation of $f$ at point $\vy$.
+Thus, the Lemma states that the absolute error in this linear approximation is no larger than $\frac{\beta}{2}$ times the squared distance (i.e., $\norm{\vx-\vy}^2$) between the two points $\vx, \vy$.\\[5pt]
+\noindent Now, in addition to $f$ being $\beta-$smooth, if we further assume that $f$ is convex, then we can use the first-order condition of convexity (Lemma 2 of the previous lecture) to establish an additional result that will turn out to be useful for proving the convergence guarantees for convex and smooth functions.
 
 \begin{lemma}
-	Let $f$ be such that $0 \leq f(x)-f(y)-\nabla f(y)^\intercal(x-y) \leq \dfrac{\beta}{2} \| x-y \|^2$. Then for any $x,y$ $\in \mathbb{R}^n$, one has
- \[
-	f(x) - f(y) \leq \nabla f(x)^\intercal (x-y) - \dfrac{1}{2 \beta} \| \nabla f(x)-\nabla f(y) \|^2
-\]    
+\label{improvedBoundsForConvexAndSmoothFunctions}
+Let $f$ be a convex and $\beta-$smooth function on $\mathbb{R}^n$. 
+Then, $\forall\,\vx,\vy$ $\in \mathbb{R}^n$,  we have--
+\begin{align}
+    \text{\emph{\textbf{1.}}}\quad & 
+    0 \leq f(\vx)-f(\vy) - \nabla f(\vy)^\top(\vx-\vy) \leq \dfrac{\beta}{2} \norm{\vx-\vy}^2\ \text{and further,}
+    \nonumber\\
+    \text{\emph{\textbf{2.}}}\quad &
+    \frac{1}{2 \beta} \norm{\nabla f(\vx)-\nabla f(\vy)}^2
+    \leq
+	f(\vx) - f(\vy) - \nabla f(\vy)^\top (\vx-\vy)
+	\nonumber
+\end{align}
+
 \end{lemma}
 \begin{proof}
-\textit{See \cite{bubeck2015convex} Lemma 3.5 for proof.}
+% \textit{See \cite{bubeck2015convex} Lemma 3.5 for proof.}
+Statement \textbf{1.} follows from the quadratic bound and Lemma 2 of the previous lecture.\\[5pt]
+To see how statement \textbf{2.} follows, set 
+$
+    \vz 
+    = \vx - \frac{1}{\beta}\left(
+        \nabla f\left(\vx\right) - \nabla f\left(\vy\right)
+    \right)
+$ and consider the following manipulations.
+\begin{align*}
+	f\left(\vy\right) - f\left(\vx\right)
+	&=
+	\underline{f\left(\vy\right) - f\left(\vz\right)}
+	+
+	f\left(\vz\right) - f\left(\vx\right)
+	\nonumber\\
+	&
+	\leq 
+	\nabla f\left(\vy\right)^\top\left(\vy - \vz\right)
+	+
+	\underline{
+	    f\left(\vz\right) - f\left(\vx\right)
+	 }\ 
+	\tag{Lemma 2 of previous lecture}
+	\nonumber\\
+	&
+	\leq 
+	\underline{
+	\nabla f\left(\vy\right)^\top\left(\vy - \vz\right)
+	+
+	\nabla f\left(\vx\right)^\top \left(\vz - \vx\right)
+	}
+	+ 
+	\frac{\beta}{2}\left\lVert\vz - \vx\right\rVert^2
+	\ 
+	\tag{RHS of statement \textbf{1.}}
+	\nonumber\\
+	&
+	=
+	\nabla f\left(\vy\right)^\top\left(\vy - \vx\right)
+	+
+	\left(
+	    \nabla f\left(\vy\right)
+	    -
+	    \nabla f\left(\vx\right)
+	\right)^\top
+	\underline{
+	\left(\vx - \vz\right)
+	}
+	+ 
+	\frac{\beta}{2}
+	\left\lVert
+	\underline{
+	\vz - \vx
+	}
+	\right\rVert^2
+	\nonumber\\
+	&
+	=
+	\nabla f\left(\vy\right)^\top\left(\vy - \vx\right)
+	+
+	\underline{
+	\frac{1}{\beta}
+	\left(
+	    \nabla f\left(\vy\right)
+	    -
+	    \nabla f\left(\vx\right)
+	\right)^\top
+	\left(
+	    \nabla f\left(\vx\right) - \nabla f\left(\vy\right)
+	\right)
+	}
+	\nonumber\\
+	&
+	\qquad\qquad
+	+
+	\underline{
+	\frac{\beta}{2}
+	\left\lVert
+	-\frac{1}{\beta}\left(
+	    \nabla f\left(\vx\right) - \nabla f\left(\vy\right)
+	\right)
+	\right\rVert^2
+	}\ 
+	\tag{substituting the expression for $\vz$}
+	\nonumber\\
+	&
+	=
+	\nabla f\left(\vy\right)^\top\left(\vy - \vx\right)
+	-
+	\frac{1}{2\beta}
+	\left\lVert
+	    \nabla f\left(\vx\right) - \nabla f\left(\vy\right)
+	\right\rVert^2\ 
+	\tag{rearranging and simplifying terms}
+\end{align*}{}
+Rearranging the terms of the inequality obtained from the above manipulations gives the desired result.
 \end{proof}
-
+\noindent Note that what this result tells us is the following.
+Statement \textbf{1.} tells that the error in linear approximation as discussed above is lower bounded by 0 and upper bounded by $\frac{\beta}{2} \norm{\vx-\vy}^2$ when $f$ is convex in addition to being $\beta-$smooth.
+However, statement \textbf{2.} tightens the lower bound by improving it from 0 to $\frac{1}{2 \beta} \norm{\nabla f(\vx)-\nabla f(\vy)}^2$.
+Now, using this Lemma~\ref{improvedBoundsForConvexAndSmoothFunctions}, we can prove the convergence rate bound for convex and smooth functions.
 
 \begin{thm}\label{thm:cvx-smth}
 Let $f$ be convex and $\beta$-smooth on $\mathbb{R}^n$. Then the gradient descent with step size $\gamma = 1/\beta$ satisfies
 \[
-	f(x_{k}) - f(x^{*}) \leq \dfrac{2 \beta \| x_1 - x^{*} \|^2}{k-1}
+	f(\vx^{(k)}) - f(\vx^\ast) \leq \frac{2 \beta \norm{\vx^{(1)} - \vx^\ast}^2}{k-1}.
 \]
 \end{thm}
 
 \begin{proof}
-\textit{See \cite{bubeck2015convex} page 268.}
+\textit{
+    We skip the proof for the sake of brevity.
+    Refer to \cite{bubeck2015convex} page 268 for the same.
+}
 \end{proof}
 
-
-In comparison to the convergence analysis for a convex and \textit{L-}Lipschitz function, the following points of improvement are observed in Theorem \ref{thm:cvx-smth} over the previous result:
-
+Notice that stronger assumptions on the function $f$ lead to improvements in the convergence rate.
+In comparison to the convergence analysis for a convex and $L$-Lipschitz function, the following points of improvement are observed from Theorem~\ref{thm:cvx-smth} for a convex and $\beta-$smooth function:
 \begin{itemize}
-\item No averaging of terms 
-\item $x_{k}$  is a good solution, i.e. no reference to previous iterations
-\item Convergence scales linearly with number of steps, convergence rate of order $O(1/T)$ compared to $O(1/\sqrt{T})$
-\item Ideal step size $\gamma$ is constant and does not depend on T (number of steps taken).
+    \item No averaging of terms is needed; the guarantee holds for $f(\vx^{(k)})$, the function value at the last iterate $\vx^{(k)}$.
+    \item The last iterate $\vx^{(k)}$ is a good solution; there is no need to keep track of previous iterations.
+    \item Convergence scales linearly with number of steps; we have a convergence rate of $\mathcal{O}(1/T)$ instead of $\mathcal{O}(1/\sqrt{T})$.
+    \item Ideal step size $\gamma$ is constant and does not depend on $T$, number of steps taken.
 \end{itemize}
-As an observation of ${\| x_1 - x^{*} \|^2}$, the bound will be tighter if $x_1$ will be closer to $x^{*}$ (minima), and looser if $x_1$ will be farther. Bounds that don't depend on the initial value of $x$ will be discussed later in this lecture.
+However, the convergence rate bound still has the term ${\norm{\vx^{(1)} - \vx^\ast}^2}$ and thus, the convergence rate depends on the choice of initialization $\vx^{(1)$. 
+In particular, the bound will be tighter if $\vx^{(1)}$ is closer to $\vx^\ast$ (the minimum), and looser if $\vx^{(1)}$ is farther. 
+Bounds that don't depend on the initial value of $\vx$ will be discussed later in this lecture.
 
 \section{Strong convexity}
 
 \begin{defn}[Strong convexity]
-A function $f(x)$ is $\alpha$-strongly convex, if for $\alpha>0$, $\forall x\in\dom(f)$, 
+A function $f(\vx)$ is $\lambda$-strongly convex, if for $\lambda>0$, $\forall \vx \in \dom(f)$, 
 \begin{align*}
-f(x) - \frac{\alpha}{2} \norm{x}^2 \text{is convex.}
+    f(\vx) - \frac{\lambda}{2} \norm{\vx}^2 \text{ is convex.}
 \end{align*}
 \end{defn}
 
-Strong convexity provides a lower bound for the function's curvature. The function must have strictly positive curvature. In other words, all eigenvalues of the Hessian of a $\alpha$-strongly convex function are lower bounded by $\alpha$. We can write this in terms of positive-semi definiteness as
+Strong convexity provides a lower bound for the function's curvature. The function must have strictly positive curvature. In other words, all eigenvalues of the Hessian of a $\lambda$-strongly convex function are lower-bounded by $\lambda$. We can write this in terms of positive semi-definiteness as
 \[
-\nabla^2 f(x) \succeq \alpha I  \iff  \nabla^2 f(x) - \alpha I \succeq 0
+    \nabla^2 f(\vx) \succeq \lambda \mI \iff \nabla^2 f(\vx) - \lambda \mI \succeq 0.
 \]
 
 For example, $f:\R\to\R, f(x) = \frac{h}{2} x^2$ is $h$-strongly convex, but not $(h+\epsilon)$-strongly convex for $\epsilon>0$. Figure~\ref{str_convex} illustrates examples of two convex functions, of which only one is strongly convex.\\
@@ -276,71 +398,106 @@ For example, $f:\R\to\R, f(x) = \frac{h}{2} x^2$ is $h$-strongly convex, but not
     \label{str_convex}
 \end{figure}
 
-
-
+\begin{lemma}\label{lemma:str-cvx-bound}
+Let $f$ be $\lambda$-strongly convex. Then $\forall \vx, \vy \in \dom(f)$, we have
+\[
+    f(\vy) - f(\vx) \leq \nabla f(\vy)^\top (\vy-\vx) - \frac{\lambda}{2} \norm{\vx - \vy}^2.
+\]
+\end{lemma}
+\begin{proof}
+The proof follows from the definition of strong convexity and the linear approximation idea for convex functions as seen before.
+Try proving it for yourself!
+\end{proof}
 
 \subsection{Strongly convex and Lipschitz functions}
 \begin{thm}\label{thm:str-cvx-lipschitz}
-	Let $f$ be $\alpha$-strongly convex and $L$-Lipschitz. Then the projected subgradient descent after $T$ steps with $\gamma_k = \dfrac{2}{\alpha(k+1)}$ satisfies  
+Let $f$ be $\lambda$-strongly convex and $L$-Lipschitz. Then the projected subgradient descent after $T$ steps with $\gamma_k = \frac{2}{\lambda(k+1)}$ satisfies  
 \[
-	f\left(\sum_{k=1}^T \dfrac{2k}{T(T+1)} x_k \right) - f(x^{*}) \leq \frac{2 L^2}{\alpha(T+1)}
+	f\parens{\sum_{k=1}^T \frac{2k}{T(T+1)} \vx^{(k)}} - f(\vx^\ast) \leq \frac{2 L^2}{\lambda(T+1)}.
 \]
 \end{thm}
 
 \begin{proof}
-\textit{See \cite{bubeck2015convex} page 277}
-%%%%%%%%%%%%%
-% to do
-%%%%%%%%%%%%%
+We start with Lemma \ref{lemma:str-cvx-bound}:
+\begin{align*}
+    f(\vx^{(k)}) - f(\vx^\ast) &\leq \nabla f(\vx^{(k)})^\top (\vx^{(k)} - \vx^\ast) - \frac{\lambda}{2} \norm{\vx^{(k)} - \vx^\ast}^2 \\
+    &= \frac{1}{\gamma_k} (\vx^{(k)} - \vx^{(k+1)})^\top (\vx^{(k)} - \vx^\ast) - \frac{\lambda}{2} \norm{\vx^{(k)} - \vx^\ast}^2 \\
+    &= \frac{1}{2\gamma_k} \parens{\norm{\vx^{(k)} - \vx^{(k+1)}}^2 + \norm{\vx^{(k)} - \vx^\ast}^2 - \norm{\vx^{(k+1)} - \vx^\ast}^2} - \frac{\lambda}{2} \norm{\vx^{(k)} - \vx^\ast}^2 \tag{$2 \va^\top \vb = \norm{\va}^2 + \norm{\vb}^2 - \norm{\va - \vb}^2$} \\
+    &= \frac{\gamma_k}{2} \norm{\nabla f(\vx^{(k)})}^2 + \frac{1}{2\gamma_k} \parens{\norm{\vx^{(k)} - \vx^\ast}^2 - \norm{\vx^{(k+1)} - \vx^\ast}^2} - \frac{\lambda}{2} \norm{\vx^{(k)} - \vx^\ast}^2 \\
+    &\leq \frac{\gamma_k}{2} L^2 + \parens{\frac{1}{2\gamma_k} - \frac{\lambda}{2}} \norm{\vx^{(k)} - \vx^\ast}^2 - \frac{1}{2\gamma_k} \norm{\vx^{(k+1)} - \vx^\ast}^2 \tag{$f$ is $L$-Lipschitz}
+\end{align*}
+
+We can now multiply both sides by $k$ and sum from 1 to $T$:
+\begin{align*}
+    \sum_{k=1}^{T} k \parens{f(\vx^{(k)}) - f(\vx^\ast)} &\leq \sum_{k=1}^{T} k \parens{\frac{\gamma_k}{2} L^2 + \parens{\frac{1}{2\gamma_k} - \frac{\lambda}{2}} \norm{\vx^{(k)} - \vx^\ast}^2 - \frac{1}{2\gamma_k} \norm{\vx^{(k+1)} - \vx^\ast}^2} \\
+    &= \sum_{k=1}^{T} \parens{\frac{k L^2}{\lambda (k+1)} + k\parens{\frac{\lambda (k+1)}{4} - \frac{\lambda}{2}} \norm{\vx^{(k)} - \vx^\ast}^2 - \frac{\lambda k(k+1)}{4} \norm{\vx^{(k+1)} - \vx^\ast}^2} \tag{substituting $\gamma_k = \frac{2}{\lambda(k+1)}$} \\
+    &= \sum_{k=1}^{T} \parens{\frac{k L^2}{\lambda (k+1)} + \frac{\lambda}{4} \parens{k(k-1)\norm{\vx^{(k)} - \vx^\ast}^2 - k(k+1)\norm{\vx^{(k+1)} - \vx^\ast}^2}} \\
+    &\leq \sum_{k=1}^{T} \parens{\frac{L^2}{\lambda} + \frac{\lambda}{4} \parens{k(k-1)\norm{\vx^{(k)} - \vx^\ast}^2 - k(k+1)\norm{\vx^{(k+1)} - \vx^\ast}^2}} \tag{$\frac{k}{k+1} \leq 1$} \\
+    &= \frac{T L^2}{\lambda} + \underbrace{\sum_{k=1}^{T} \parens{\frac{\lambda}{4} \parens{k(k-1)\norm{\vx^{(k)} - \vx^\ast}^2 - k(k+1)\norm{\vx^{(k+1)} - \vx^\ast}^2}}}_{\leq 0} \\
+    &\leq \frac{T L^2}{\lambda}
+\end{align*}
+
+We can now apply Jensen's inequality to the left-hand side. Note that for a convex function $\phi$ Jensen's inequality tells us that
+\[
+    \phi\parens{\frac{\sum_i a_i x_i}{\sum_i a_i}} \leq \frac{\sum_i a_i \phi(x_i)}{\sum_i a_i}.
+\]
+
+In our case here we have
+\begin{gather*}
+    f\parens{\frac{\sum_{k=1}^{T} k \vx^{(k)}}{\sum_{k=1}^{T} k}} \leq \frac{\sum_{k=1}^{T} k f(\vx^{(k)})}{\sum_{k=1}^{T} k} \iff \parens{\sum_{k=1}^{T} k} f\parens{\frac{\sum_{k=1}^{T} k \vx^{(k)}}{\sum_{k=1}^{T} k}} \leq \sum_{k=1}^{T} k f(\vx^{(k)}).
+\end{gather*}
+
+Since $\sum_{k=1}^{T} k = \frac{T(T+1)}{2}$, we have
+\begin{align*}
+    \sum_{k=1}^{T} k \parens{f(\vx^{(k)}) - f(\vx^\ast)} &= \sum_{k=1}^{T} k f(\vx^{(k)}) - f(\vx^\ast) \parens{\sum_{k=1}^{T} k} \\
+    &\geq \parens{\sum_{k=1}^{T} k} f\parens{\sum_{k=1}^{T} \frac{2k}{T(T+1)} \vx^{(k)}} - f(\vx^\ast) \parens{\sum_{k=1}^{T} k}
+\end{align*}
+
+Coming back to our previous inequality, we have:
+\[
+    \parens{\sum_{k=1}^{T} k} f\parens{\sum_{k=1}^{T} \frac{2k}{T(T+1)} \vx^{(k)}} - f(\vx^\ast) \parens{\sum_{k=1}^{T} k} \leq \frac{T L^2}{\lambda}
+\]
+
+We use the fact that $\sum_{k=1}^{T} k = \frac{T(T+1)}{2}$ once again to complete the proof:
+\[
+    f\parens{\sum_{k=1}^{T} \frac{2k}{T(T+1)} \vx^{(k)}} - f(\vx^\ast) \le \frac{2 L^2}{\lambda (T+1)}
+\]
 \end{proof}
 
-With Theorem \ref{thm:str-cvx-lipschitz}, we can notice how moving from convexity to strong convexity may affect the convergence rate of gradient descent. We previously tackled convexity paired with Lipschitz continuity in Lecture 2 and the similarity with the new convergence guarantees is pretty noticeable. By moving to strong-convexity, we can notice a few things:
+With Theorem \ref{thm:str-cvx-lipschitz}, we can notice how moving from convexity to strong convexity may affect the convergence rate of gradient descent. We previously tackled convexity paired with Lipschitz continuity in Lecture 2 and the similarity with the new convergence guarantees is pretty noticeable. By moving to strong convexity, we can notice a few things:
 \begin{itemize}
-    \item Still have averaging of terms, where $\sum\limits_{k=1}^T \dfrac{2k}{T(T+1)} x_k$ is a non uniform averaging scheme with more recent iterates having more weight
-    \item Current $x_k$ solution is not appropriate, i.e. ideally only evaluate at $x_k$
-    \item Convergence now scales linearly with number of steps
+    \item We still have averaging of terms in the guarantee. 
+    However, the averaging is \emph{weighted}; $\sum_{k=1}^T \frac{2k}{T(T+1)} \vx^{(k)}$ is a non-uniform averaging scheme with more recent iterates having higher weight, which is intuitive.
+    \item The final iterate $\vx^{(k)}$ is not appropriate.
+    Ideally, we would only want to have $f$ evaluated at $\vx^{(k)}$ in the guarantee.
+    \item Convergence still scales linearly with number of steps.
     \item Although not constant, the step size $\gamma_k$ is diminishing at every step
 \end{itemize}
 
-\vspace{3mm}
-Unlike previous results, the right hand side does not have any terms dependent on distance from $x^{*}$ here. Intuitively this is a consequence of two conditions which have to be met for a Strong Convex function:
+Unlike previous results, the right hand side does not have any terms dependent on distance from $\vx^\ast$ here. Intuitively this is a consequence of two conditions which have to be met for a strongly convex function:
 \begin{itemize}
-    \item Norm of Gradient increases as we go further away from minima.
-    \item Gradient for a L-Lipschitz function is bounded, and can not keep increasing.
+    \item Norm of gradient increases as we go further away from minimum.
+    \item Gradient for a $L$-Lipschitz function is bounded, and can not keep increasing.
 \end{itemize}
-Thus to have a finite bound, no distance term on the right hand side of the bound.
-\vspace{3mm}
+Thus, intuitively, there is no distance term on the right hand side of the bound to have a finite bound.
+One could hope that by combining strong convexity along with smoothness, gradient descent may present stronger convergence guarantees. 
+We will see how smoothness removes dependency from the averaging scheme.
 
-One could hope that by combining strong convexity along with smoothness, gradient descent may present stronger convergence guarantees. We will see how smoothness removes dependency from the averaging scheme.
 
-\vspace{3mm}
-Note: $\alpha $ Strongly convex and L-Lipschitz condition is a special case because the upper bound L-Lipschitz condition will ultimately conflict with the lower bound $\alpha $ Strongly convex grow rate. Therefore, such functions are typically defined in a range, e.g. $x \in [-1,1]$.
+Note: $\lambda$-strongly convex and $L$-Lipschitz condition is a special case because the upper bound $L$-Lipschitz condition will ultimately conflict with the lower bound $\lambda$-strongly convex growth rate. Therefore, such functions are typically considered only on a range, e.g. $x \in [-1,1]$.
+
 
 \subsection{Strongly convex and smooth functions}
+Lemma \ref{lemma:smooth-sandwich} (quadratic bounds) gives us that a $\beta$-smooth function $f$ is sandwiched between two quadratics because of the following inequality:
 
-Recalling Lemma \ref{lemma:smooth-sandwich} (Quadratic bounds), it tells us that a $\beta$-smooth function $f$ is sandwiched between 2 quadratics because of the following inequality:
+\begin{equation}\label{eq:smooth-bound}
+    f(\vy) + \nabla f(\vy)^\top (\vx-\vy) - \frac{\beta}{2} \norm{\vx-\vy}^2 \leq f(\vx) \leq f(\vy) + \nabla f(\vy)^\top (\vx-\vy) + \frac{\beta}{2} \norm{\vx-\vy}^2
+\end{equation}
 
-\begin{align}\label{eq:smooth-bound}
-f(y) + \nabla f(y)^\intercal (x-y) - \dfrac{\beta}{2} \| x-y\|^2 \leq f(x) \leq f(y) + \nabla f(y)^\intercal (x-y) + \dfrac{\beta}{2} \| x-y\|^2
-\end{align}
- 
-
-
-Now we introduce another lemma which allows us to lower bound an $\alpha$-strong convex function.
-
-\begin{lemma}\label{lemma:str-cvx-bound}
-Let $f$ be $\lambda$-strongly convex. Then $\forall x, y$, we have:
-\begin{align*}
-f(y) - f(x) \leq \nabla f(y)^T(y-x) - \frac{\lambda}{2} \norm{x - y}^2
-\end{align*}
-The strong convexity parameter $\lambda$ is a measure of the curvature of $f$.
-\end{lemma}
-
-By rearranging terms, this tells us that a $\lambda$-strong convex function can be lower bounded by the following inequality:
-
-\begin{align}\label{eq:str-cvx-bound}
-f(x) \geq f(y) - \nabla f(y)^T(y-x) + \frac{\lambda}{2} \norm{x - y}^2
-\end{align}
+Similarly, by rearranging terms in Lemma \ref{lemma:str-cvx-bound} tells us that a $\lambda$-strong convex function can be lower-bounded by the following inequality:
+\begin{equation}\label{eq:str-cvx-bound}
+    f(\vx) \geq f(\vy) - \nabla f(\vy)^\top (\vy-\vx) + \frac{\lambda}{2} \norm{\vx - \vy}^2.
+\end{equation}
 
 Figure \ref{fig:bounds} showcases the resulting bounds from both the smoothness and the strong convexity constraints. The shaded area in each sub-figure is showing the area validated by the respective bound(s).
 
@@ -356,109 +513,149 @@ Figure \ref{fig:bounds} showcases the resulting bounds from both the smoothness 
 \begin{figure}[h]
 \centering
     \includegraphics[width=0.4\textwidth]{lipschitz-bound.png}
-    \caption{For an $L_f$-Lipschitz continuous function, the green region shows where the function would exist . We can imagine that without smoothness and only L-Lipschitz in equation \ref{eq:smooth-bound}, the accepted region would be having linear boundaries}
+    \caption{For an $L_f$-Lipschitz continuous function, the green region shows where the function would exist. We can imagine that without smoothness and only $L$-Lipschitz in equation \ref{eq:smooth-bound}, the accepted region would be having linear boundaries}
     \label{fig:accepted-reg}
 \end{figure}
 
 
 \begin{lemma}[Coercivity of the gradient] Let $f$ be $\beta$-smooth and $\lambda$-strongly convex. Then for all $x$ and $y$, we have:
-$$ \langle \nabla f(x) - \nabla f(y), x-y \rangle \geq \frac{\lambda\beta}{\lambda + \beta} \| x-y\|^2 + \frac{1}{\lambda + \beta} \| \nabla f(x) - \nabla f(y) \|^2 $$
-
+\[
+    \inner{\nabla f(\vx) - \nabla f(\vy), \vx-\vy} \geq \frac{\lambda\beta}{\lambda + \beta} \norm{\vx-\vy}^2 + \frac{1}{\lambda + \beta} \norm{\nabla f(\vx) - \nabla f(\vy)}^2.
+\]
 \end{lemma}
 
 \begin{proof}
-\textit{See \cite{bubeck2015convex} Lemma 3.11 for proof.}
+\textit{See \cite{bubeck2015convex} Lemma 3.11 for proof, which we skip for brevity.}
 \end{proof}
+
 \begin{thm}\label{thm:str-cvx-smth}
 For $f$ a $\lambda$-strongly convex and $\beta$-smooth function, gradient descent with $\gamma = \frac{2}{\lambda + \beta}$ satisfies:
 \[
-	f(x_{k+1}) - f(x^{*}) \leq \frac{\beta}{2} \exp \left( -\frac{4k}{\kappa + 1} \right) \| x_1 - x^{*} \|^2
+	f(\vx^{(k+1)}) - f(\vx^\ast) \leq \frac{\beta}{2} \exp\parens{ -\frac{4k}{\kappa + 1}} \norm{\vx^{(1)} - \vx^\ast}^2
 \]
-where $\kappa \triangleq \frac{\beta}{\lambda}$ is the condition number.
+where $\kappa := \frac{\beta}{\lambda}$ is the condition number.
 \end{thm}
 
-\begin{proof} (Theorem \ref{thm:str-cvx-smth}) First, let's define the distance between the coordinate at the iteration $k$ and the optimal point as:
-$$ D_k \triangleq \| x_k - x^{*}\|$$
-Then,
-$$ D_{k+1}^2 = \| x_{k+1} - x^{*} \|^{2} $$
+\begin{proof}
+First, let's define the distance between the coordinate at the iteration $k$ and the optimal point as:
+\[
+    D_k := \norm{\vx^{(k)} - \vx^\ast}.
+\]
 
-By replacing $x_{k+1}$ by its definition $x_k - \gamma \nabla f(x_k)$, we get:
-$$ D_{k+1}^2 = \| x_k - \gamma \nabla f(x_k) - x^{*} \|^{2} $$
+By replacing $\vx^{(k+1)}$ by its definition $\vx^{(k)} - \gamma \nabla f(\vx^{(k)})$, we get:
+\[
+    D_{k+1}^2 = \norm{\vx^{(k)} - \gamma \nabla f(\vx^{(k)}) - \vx^\ast}^{2}.
+\]
 
 By expanding the square, we get:
-$$ D_{k+1}^2 = \| x_k - x^{*} \|^2 - 2 \gamma \langle \nabla f(x_k), x_k - x^{*} \rangle + \gamma^2 \| \nabla f(x_k) \|^2 $$
+\[
+    D_{k+1}^2 = \norm{\vx^{(k)} - \vx^\ast}^2 - 2 \gamma \inner{\nabla f(\vx^{(k)}), \vx^{(k)} - \vx^\ast} + \gamma^2 \norm{\nabla f(\vx^{(k)})}^2.
+\]
 
-By doing a slight modification to the second term, we can apply the lemma of coercivity of the gradient. Since $ \nabla f(x^{*}) = 0$ this equality holds:
-$$ \langle \nabla f(x_k), x_k - x^{*} \rangle = \langle \nabla f(x_k) - \nabla f(x^{*}), x_k - x^{*} \rangle $$
-And by applying the lemma of coercivity of the gradient, we get an upper bound:
-$$ \langle \nabla f(x_k) - \nabla f(x^{*}), x_k - x^{*} \rangle \geq \frac{\lambda \beta}{\lambda + \beta} D^2_k + \frac{1}{\lambda + \beta} \| \nabla f(x_k) - \nabla f(x^{*}) \|^2 $$
+By doing a slight modification to the second term, we can apply the lemma of coercivity of the gradient. Since $ \nabla f(\vx^\ast) = \vzero$ this equality holds:
+\[
+    \langle \nabla f(\vx^{(k)}), \vx^{(k)} - \vx^\ast \rangle = \langle \nabla f(\vx^{(k)}) - \nabla f(\vx^\ast), \vx^{(k)} - \vx^\ast \rangle.
+\]
+
+By applying the lemma of coercivity of the gradient, we get an upper bound:
+\[
+    \inner{\nabla f(\vx^{(k)}) - \nabla f(\vx^\ast), \vx^{(k)} - \vx^\ast} \geq \frac{\lambda \beta}{\lambda + \beta} D^2_k + \frac{1}{\lambda + \beta} \norm{\nabla f(\vx^{(k)}) - \nabla f(\vx^\ast)}^2.
+\]
 
 By replacing the second term by the upper bound we just found, we get:
-$$ D^2_{k+1} \leq D^2_k - 2 \gamma \left(\frac{\lambda \beta}{\lambda + \beta} D^2_k + \frac{1}{\lambda + \beta} \| \nabla f(x_k)\|^2\right) + \gamma^2 \| \nabla f(x_k) \|^2$$
-We can rearrange the terms and add $ - \nabla f(x^{*})$ again inside the norm terms:
-$$ D_{k+1}^2 \leq \left(1 - \frac{2\gamma \lambda \beta}{\lambda + \beta}\right) D^2_k + \left( \frac{-2\gamma}{\lambda + \beta} + \gamma^2 \right) \| \nabla f(x_k) - \nabla f(x^{*}) \|^2$$
+\[
+    D^2_{k+1} \leq D^2_k - 2 \gamma \parens{\frac{\lambda \beta}{\lambda + \beta} D^2_k + \frac{1}{\lambda + \beta} \norm{\nabla f(\vx^{(k)})}^2} + \gamma^2 \norm{\nabla f(\vx^{(k)})}^2.
+\]
+
+We can rearrange the terms and add $-\nabla f(\vx^\ast)$ again inside the norm terms:
+\[
+    D_{k+1}^2 \leq \parens{1 - \frac{2\gamma \lambda \beta}{\lambda + \beta}} D^2_k + \parens{\frac{-2\gamma}{\lambda + \beta} + \gamma^2} \norm{\nabla f(\vx^{(k)}) - \nabla f(\vx^\ast)}^2.
+\]
 
 The term $\left(1-\frac{2\gamma \lambda \beta}{\lambda + \beta}\right)$ is useful, because we can show that it is less than 1 and has geometric convergence. Further steps will try to simplify the remaining terms.
 
 We can change the norm term by using the fact that $f$ is $\beta$-smooth:
-$$ D_{k+1}^2 \leq \left( 1 - \frac{2\gamma \lambda \beta}{\lambda + \beta}\right)  D^2_k + \left( \frac{-2\gamma}{\lambda + \beta} + \gamma^2 \right) \beta^2 D^2_k $$
+\[
+    D_{k+1}^2 \leq \parens{1 - \frac{2\gamma \lambda \beta}{\lambda + \beta}} D^2_k + \parens{\frac{-2\gamma}{\lambda + \beta} + \gamma^2} \beta^2 D^2_k.
+\]
 
-Let $ \gamma = \frac{2}{\lambda + \beta} $, then:
-$$ D^2_{k+1} \leq \left( 1 - \frac{4 \lambda \beta}{(\lambda + \beta)^2} \right) D^2_k $$
+Let $\gamma = \frac{2}{\lambda + \beta}$, then:
+\[
+    D^2_{k+1} \leq \parens{1 - \frac{4 \lambda \beta}{(\lambda + \beta)^2}} D^2_k.
+\]
 
-By unrolling the recursion and since $ \left( \frac{\kappa - 1}{\kappa + 1} \right)^2 = \left( 1 - \frac{4 \lambda \beta}{(\lambda + \beta)^2} \right) $ we get:
-$$ D^2_{k+1} \leq \left( \frac{\kappa - 1}{\kappa + 1} \right)^{2k} D_1^2 $$
+By unrolling the recursion and since $\parens{\frac{\kappa - 1}{\kappa + 1}}^2 = \parens{1 - \frac{4 \lambda \beta}{(\lambda + \beta)^2}}$, we get:
+\[
+    D^2_{k+1} \leq \parens{\frac{\kappa - 1}{\kappa + 1}}^{2k} D_1^2.
+\]
 
-Since $\exp(-x) \geq 1-x$ for every $x$, we get:
-$$ D_{k+1}^2 \leq \exp{\left( -\frac{4k}{\kappa + 1} \right)} D_1^2  $$
+Since $\exp(-u) \geq 1-u$ for every $u$, we get:
+\[
+    D_{k+1}^2 \leq \exp{\parens{-\frac{4k}{\kappa + 1}}} D_1^2.
+\]
 
-By $ \beta $-smoothness we finally have:
-
-$$ f(x_{k+1}) - f(x^{*}) \leq \frac{\beta}{2} \exp{\left( -\frac{4k}{\kappa + 1} \right)} \| x_1 - x^{*} \|^2 $$
-
+By $\beta$-smoothness we finally have:
+\[
+    f(\vx^{(k+1)}) - f(\vx^\ast) \leq \frac{\beta}{2} \exp{\parens{-\frac{4k}{\kappa + 1}}} \norm{\vx^{(1)} - \vx^\ast}^2.
+\]
 \end{proof}
 
 Theorem \ref{thm:str-cvx-smth} observations
 \begin{itemize}
-    \item $x_k$ solution is a good solution, i.e. no reference to previous iterations
-    \item Convergence rate of order $O(\exp(-T))$
-    \item $\kappa$ measures how \textit{far apart} the upper and lower bounds are (see Figure \ref{fig:bounds}). It can be interpreted as the ratio of largest to smallest curvature of the function.
+    \item $\vx^{(k)}$ solution is a good solution, i.e. no reference to previous iterations in the guarantee.
+    \item We achieve a fast convergence rate of $\mathcal{O}(\exp(-T))$.
+    \item $\kappa$ measures how \emph{far apart} the upper and lower bounds are (see Figure \ref{fig:bounds}). 
+    It can be interpreted as the ratio of largest to smallest curvature of the function.
     \item The smaller the condition number $\kappa$ is, the less iterations are required to converge. Intuitively, the accepted region between the bounds will be smaller.
     \item Consequently, the greater $\beta$ is the more iterations will be required to converge. This is logical since a constant step size on a function with a steep gradient will cause the a greater change in the function value.
 \end{itemize}
-\pagebreak
 
-\section{Comparison of optimization properties for different function classes }
-The table below summarizes various convergence properties of discussed functions classes.  From left to right, the assumptions on properties of these classes increase, from Convex and L-Lipschitz to $\lambda$ strongly convex and $\beta$ smooth. In the same direction, the convergence rates are also increase, aligned with stronger assumptions on those functions.
-
-\begin{table}[h]
-\footnotesize
-%\small
-\renewcommand{\arraystretch}{1.8}
-\centering
-    \caption{Comparison of different function classes}
-    \begin{tabularx}{\columnwidth}{|>{\hsize=0.8\hsize\linewidth=\hsize}X|>{\hsize=1.1\hsize\linewidth=\hsize}X|>{\hsize=0.8\hsize\linewidth=\hsize}X|>{\hsize=1.3\hsize\linewidth=\hsize}X|>{\hsize=1\hsize\linewidth=\hsize}X|}
-        \hline
-        Function Class & cvx, L-Lipschitz & cvx, $\beta$ smooth & $\alpha$ str-cvx, L-Lipschitz & $\lambda$ str-cvx, $\beta$ smooth \\
-        \hline
-        Optimal Step size & $\gamma = \frac{\norm{x_1 - x^\ast}_2}{L \sqrt{T}}$ & $\gamma = \frac{1}{\beta}$ & $\gamma = \frac{2}{\alpha (k+1)}$ & $\gamma = \frac{2}{\lambda + \beta}$ \\
-        Convergence Rate     & $\mathcal{O}(1/\sqrt{T})$ & $\mathcal{O}(1/{T})$ &$\mathcal{O}(1/{T})$ & $\mathcal{O}(exp(-T))$    \\
-        Sub-optimal gap       & $
-f\left(\frac{1}{T}\sum_{k=1}^T x_k\right)-f(x^*)$ & $(x_{k}) - f(x^{*})$ & {\tiny $f\left(\sum_{k=1}^T \dfrac{2k}{T(T+1)} x_k \right)-f(x^{*})$ }& $f(x_{k+1}) - f(x^{*})$  \\
-        Bounds of the gap & $\leq \frac{\norm{x_1 - x^\ast}L}{\sqrt{T}}$ & $\leq \dfrac{2 \beta \| x_1 - x^{*} \|^2}{k-1}$ & $ \leq \frac{2 L^2}{\alpha(T+1)} $ &  $\leq \frac{\beta}{2} \exp \left( -\frac{4k}{\kappa + 1} \right) D_1^2$ \\
-
-        \hline
-    \end{tabularx}
-    \label{table: simulation parameters}
-\end{table}
-
+\section{Comparison of optimization properties for different function classes}
+Table \ref{tab:comparison} summarizes various convergence properties of discussed functions classes.  From top to bottom, the assumptions on properties of these classes increase, from convex and $L$-Lipschitz to $\lambda$-strongly convex and $\beta$-smooth. In the same direction, the convergence rates are also increase, aligned with stronger assumptions on those functions.
 
 \section*{Suggested exercises}
-
 \begin{itemize}
-    \item UML \cite{Shalev-Shwartz:2014:UML:2621980} - \textbf{Chapter 12:} 2; \textbf{Chapter 14:} 1
-    \item GBH \cite{Gower} - \textbf{Ex. 1:} P5, P6; \textbf{Ex. 2:} P3, P4, P5; \textbf{Ex. 3:} P1-4
+    \item \citet{Shalev-Shwartz:2014:UML:2621980} -- \textbf{Chapter 12:} 2; \textbf{Chapter 14:} 1
+    \item \citet{Gower} -- \textbf{Ex. 1:} P5, P6; \textbf{Ex. 2:} P3, P4, P5; \textbf{Ex. 3:} P1-4
 \end{itemize}
+
+\begin{landscape}
+\begin{table}[p]
+\centering
+\caption{Convergence rates for different function classes in a nutshell}
+\label{tab:comparison}
+\begin{tabular}{@{}cccccc@{}}
+\toprule
+Function class & Optimal step-size & Convergence rate & Sub-optimal gap & & Bounds of the gap \\ \midrule
+convex, $L$-Lipschitz &
+    $\displaystyle \gamma = \frac{\norm{\vx^{(1)} - \vx^\ast}_2}{L \sqrt{T}}$ &
+    $\displaystyle \mathcal{O}(1/\sqrt{T})$ &
+    $\displaystyle f\parens{\frac{1}{T}\sum_{k=1}^T \vx^{(k)}} - f(\vx^\ast)$ &
+    $\leq$ &
+    $\displaystyle \frac{L}{\sqrt{T}} \norm{\vx^{(1)} - \vx^\ast}$ \\
+convex, $\beta$-smooth &
+    $\displaystyle \gamma = \frac{1}{\beta}$ &
+    $\displaystyle \mathcal{O}(1/{T})$ &
+    $\displaystyle f(\vx^{(k)}) - f(\vx^\ast)$ &
+    $\leq$ &
+    $\displaystyle \frac{2 \beta}{k-1} \norm{\vx^{(1)} - \vx^\ast}^2$ \\
+$\lambda$-strongly convex, $L$-Lipschitz &
+    $\displaystyle \gamma = \frac{2}{\lambda (k+1)}$ &
+    $\displaystyle \mathcal{O}(1/{T})$ &
+    $\displaystyle f\parens{\sum_{k=1}^T \frac{2k}{T(T+1)} \vx^{(k)}} - f(\vx^\ast)$ &
+    $\leq$ &
+    $\displaystyle \frac{2 L^2}{\lambda(T+1)}$ \\
+$\lambda$-strongly convex, $\beta$-smooth &
+    $\displaystyle \gamma = \frac{2}{\lambda + \beta}$ &
+    $\displaystyle \mathcal{O}(\exp(-T))$ &
+    $\displaystyle f(\vx^{(k+1)}) - f(\vx^\ast)$ &
+    $\leq$ &
+    $\displaystyle \frac{\beta}{2} \exp \parens{-\frac{4k}{\kappa + 1}} \norm{\vx^{(1)} - \vx^\ast}^2$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{landscape}
+
 
 %----------------------------------------
 % \section*{Acknowledgments} 

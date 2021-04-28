@@ -18,6 +18,7 @@
 \usepackage{dsfont}
 
 \usepackage{xcolor}
+\usepackage{booktabs}
 \usepackage{shadethm}
 
 \usepackage{fancyhdr}
@@ -107,16 +108,32 @@ In the previous lectures we summarized our analysis of upper bounds for the rate
 
 \begin{table}[H]
 \centering
-    {\renewcommand{\arraystretch}{2.0}
-    \begin{tabular}{|c|c|}\hline
-		Property of the Convex Objective Function & Upper Bound on Convergence Rate \\\hline
-		L-lipschitz & $ \frac{D_1 L}{\sqrt{T}}$\\\hline
-		$\beta$-smooth & $ \frac{D^2_1 \beta}{T}$\\\hline
-		$\alpha$-strongly convex and L-lipschitz & $ \frac{L^2}{\alpha T}$\\\hline
-		$\alpha$-strongly convex and $\beta$-smooth & $ D^2_1 \exp({\frac{-T}{\kappa}})$\\\hline
+    {
+    \renewcommand{\arraystretch}{2.0}
+    \begin{tabular}{cc}
+    \toprule
+		\textbf{Property of the Convex Objective Function} 
+		& 
+		\textbf{Upper Bound on Convergence Rate}
+		\\
+	\toprule
+		$L-$Lipschitz & $ \frac{L D_1}{\sqrt{T}}$
+	\\
+% 	\midrule
+		$\beta-$smooth & $ \frac{2 \beta D^2_1 }{T - 1}$
+	\\
+% 	\midrule
+		$\alpha-$strongly convex and $L-$Lipschitz & $ \frac{2 L^2}{\alpha \left(T+1\right)}$
+	\\
+% 	\midrule
+		$\alpha-$strongly convex and $\beta-$smooth & $ \frac{\beta D^2_1}{2} \exp({\frac{-4T}{\kappa + 1}})$
+		\\
+	\bottomrule
 	\end{tabular}
 	}
-\caption{Various upper bounds on convergence rates in gradient descent depending on the properties of the objective function. Note $D_1 = \norm{x_1 - x^*}_2$.}
+\caption{
+    Upper bounds on the convergence rates for various function classes. Note that $D_1 := \norm{x_1 - x^*}_2$.
+}
 \label{tab:upper_bounds}
 \end{table}
 
