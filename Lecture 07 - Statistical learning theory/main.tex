@@ -237,26 +237,26 @@ The generic Chernoff's bound is a family of upper-bounds obtained by using the m
 Let $X$ be a random variable taking values in the interval $[a, b]$, with the expectation value of $0$. Then for $\forall \lambda > 0$,
 $$\mathbb{E}[e^{\lambda X}] \leq e^{\frac{\lambda^2 (b - a)^2}{8}}$$
 \end{lemma}
-$e^{\lambda X}$ is often regarded as the moment generating function of the random variable $X$.
+$\mathbb{E}[e^{\lambda X}]$ is often regarded as the moment generating function of the random variable $X$.
 
 
 \begin{thm}[Hoeffding's Inequality]
-Let $Z_1, \cdots, Z_m$ be independent random variables such that $\mathbb{P}\{a \leq Z_i \leq b\} = 1$ for $i = 1, \ldots, m$. Let $\bar{Z} = \frac{1}{m}\sum_{i=1}^m Z_i$. Then, for any $\epsilon > 0$:
+Let $Z_1, \cdots, Z_m$ be a sequence of \iid \,random variables such that $\mathbb{P}\{a \leq Z_i \leq b\} = 1$ for $i = 1, \ldots, m$. Let $\bar{Z} = \frac{1}{m}\sum_{i=1}^m Z_i$. Then, for any $\epsilon > 0$:
 \[
 	P\left( \left| \ \bar{Z} - \E[\bar{Z}] \ \right| > \epsilon\right) \le 2 \exp\left(\frac{-2 m \epsilon^2}{(b-a)^2}\right)
 \]
 \end{thm}
 \begin{proof}
 (See Understanding Machine Learning \cite{Shalev-Shwartz:2014:UML:2621980} Appendix B.4) \\
-First, we will try to shift $Z_i$ by its mean. Define $X_i \equiv Z_i - \mathbb{E}[\bar{Z}] = Z_i - \mu$, $i\in\{1, \dots, m\}$. Denote $\bar{X} \equiv \frac{1}{m}\sum_{i=1}^{m}{X_i}$.
+First, we shift $Z_i$ by its mean. Define $X_i \equiv Z_i - \mathbb{E}[Z_i] = Z_i - \mu$, $i\in\{1, \dots, m\}$. Denote $\bar{X} \equiv \frac{1}{m}\sum_{i=1}^{m}{X_i}$.
 
-With this we use the Chernoff bounds and get that for $\forall \lambda > 0$, % Please note that it is not \geq %2020 note: actually lambda=0  will not cause a problem
-$$\mathbb{P}\{\bar{X} \geq \epsilon\} = \mathbb{P}\{e^{\lambda \bar{X}} \geq e^{\lambda \epsilon}\} \leq \frac{\mathbb{E}[e^{\lambda \bar{X}}]}{e^{\lambda \epsilon}} = e^{-\lambda \epsilon} \cdot \mathbb{E}[e^{\lambda(\frac{1}{m}\sum_{i=1}^{m}{X_i})}] = e^{-\lambda \epsilon} \prod_{i = 1}^{m}{\mathbb{E}[e^{\lambda X_i / m}]}$$
+Using the Chernoff bounds and the independence of the variables $X_i$, we get that for all $\lambda > 0$, % Please note that it is not \geq %2020 note: actually lambda=0  will not cause a problem
+$$\mathbb{P}\{\bar{X} \geq \epsilon\} = \mathbb{P}\{e^{\lambda \bar{X}} \geq e^{\lambda \epsilon}\} \leq \frac{\mathbb{E}[e^{\lambda \bar{X}}]}{e^{\lambda \epsilon}} = e^{-\lambda \epsilon} \cdot \mathbb{E}[e^{\lambda(\frac{1}{m}\sum_{i=1}^{m}{X_i})}] = e^{-\lambda \epsilon} \prod_{i = 1}^{m}{\mathbb{E}[e^{\lambda X_i / m}]}.$$
 Here $X_i / m$ is a zero mean random variable that lives in the interval $[\frac{a-\mu}{m}, \frac{b-\mu}{m}]$. Thus we can use Hoeffding's lemma and get
-$$\mathbb{P}\{\bar{X} \geq \epsilon\} \leq e^{-\lambda \epsilon + \frac{\lambda^2 (b-a)^2}{8m}}$$
+$$\mathbb{P}\{\bar{X} \geq \epsilon\} \leq e^{-\lambda \epsilon + \frac{\lambda^2 (b-a)^2}{8m}}.$$
 
 We then minimize the RHS \textit{w.r.t.} $\lambda$ and get
-$$\min_{\lambda}{e^{-\lambda \epsilon + \frac{\lambda^2 (b-a)^2}{8m}}} = \exp\left(\frac{-2m\epsilon^2}{(b-a)^2}\right)$$
+$$\min_{\lambda}{e^{-\lambda \epsilon + \frac{\lambda^2 (b-a)^2}{8m}}} = \exp\left(\frac{-2m\epsilon^2}{(b-a)^2}\right)\text{ , with }\lambda_{min} = \frac{4m\epsilon}{(b-a)^2}.$$
 
 By the same argument we can show that $\mathbb{P}\{-\bar{X} \geq \epsilon\} \leq e^{-\lambda \epsilon + \frac{\lambda^2 (b-a)^2}{8m}}$, and thus we get the desired result from the union of two disjoint probabilities:
 \[
@@ -308,7 +308,7 @@ We get the desired result:
 \end{align*}
 
 \section{Uniform convergence}
-For ERM to work, it suffices to ensure that the empirical risk of all hypothesis in $\HH$ are good approximations of their true risk. In other words, we need that uniformly over all hypothesis in $\HH$, the empirical risk is close to the true risk. In the this section we will formalize this.
+For ERM to work, it suffices to ensure that the empirical risk of all hypotheses in $\HH$ are good approximations of their true risk. In other words, we need that uniformly over all hypothesis in $\HH$, the empirical risk is close to the true risk. In this section we will formalize this.
 \begin{defn}[$\epsilon$-representative sample]
 A training set S is called $\epsilon$-representative  if:
 $$
@@ -328,16 +328,13 @@ R[h_S] \overset{(a)}{\leq} \Rhat[h_S]  + \frac{\epsilon}{2} \overset{(b)}{\leq} 
 $$
 where $(a)$ comes from the $\epsilon$-representative definition and $(b)$ comes from the fact that $h_S$ is a ERM learning rule.
 \end{proof}
-This lemma shows that to be PAC learnable it suffices to prove the training set is $\epsilon$-representative with high probability.
-
-
-
+This lemma shows that to be PAC learnable it suffices to prove the training set is $\epsilon$-representative with high probability. In that case, we say that $\HH$ has the uniform convergence property. 
 
 
 
 
 \section{VC dimension}
-In the previous parts we considered finite hypothesis classes. What happens when the number of hypotheses is infinite? We cannot just apply a union bound any more. To solve this issue, we need to have more a suitable way of measuring the “complexity” of a hypothesis class other than cardinality.
+In the previous parts we considered finite hypothesis classes. What happens when the number of hypotheses is infinite or when the hypothesis class is uncountable? We cannot just apply a union bound any more. To solve this issue, we need to have a more suitable way of measuring the “complexity” of a hypothesis class other than cardinality.
 \begin{defn}[Shattering]
 A set of points $S$ is shattered by a hypothesis class $\HH$ if there are hypotheses in $\HH$ that split $S$ in all of the $2^{|S|}$possible ways; i.e., all possible ways of classifying points in $S$ are achievable using concepts in $\HH$. 
 \end{defn}
@@ -355,7 +352,10 @@ Informally VC dimension is the maximum number of distinct points that a hypothes
 \label{fig:vcdim}
 \end{figure}
 
-As seen in Figure~\ref{fig:vcdim} our hypothesis class can label 1 points, but no set of 2 points can be labeled. Therefore the VC-dimension of this hypothesis class is 1.
+As seen in Figure~\ref{fig:vcdim}, our hypothesis class can label 1 point, but no set of 2 points can be labeled. Therefore the VC-dimension of this hypothesis class is 1. 
+
+In this example, $\HH$ is of infinite size, yet it is still PAC learnable. Indeed it turns out that the finiteness condition on the hypothesis class is a sufficient condition for learnability, but not a necessary one. Further, for some tasks such as binary classification and regression, $\HH$ is PAC learnable if and only if its VC-dimension is finite (See Understanding Machine Learning \cite{Shalev-Shwartz:2014:UML:2621980} Theorem 6.7 and Remark 6.3). 
+
 
 
 %----------------------------------------
@@ -363,3 +363,5 @@ As seen in Figure~\ref{fig:vcdim} our hypothesis class can label 1 points, but n
 \bibliography{Refs/lec7}
 %----------------------------------------
 \end{document}
+
+
