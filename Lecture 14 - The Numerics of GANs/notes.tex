@@ -8,6 +8,7 @@
 \usepackage{amsmath,amsbsy,amssymb,amsfonts,amsthm}
 \usepackage{nicefrac}
 \usepackage{mathtools}
+
 \usepackage{color}
 \usepackage{xspace} % Correct macro spacing
 \usepackage[numbers]{natbib} % For citations
@@ -16,19 +17,21 @@
 %\usepackage[small,bf]{caption}
 \usepackage{algorithm,algorithmic} 
 \usepackage{hyperref}
+\usepackage{cleveref}
 
 \usepackage{xcolor}
 \usepackage{shadethm}
 
 \usepackage{fancyhdr}
 \pagestyle{fancy}
-\lhead{This is my name}
-\rhead{this is page \thepage}
+% \lhead{This is my name}
+% \rhead{this is page \thepage}
 
 \usepackage{fancyhdr}
 \pagestyle{fancy}
-\lhead{IFT 6085 - Theoretical principles for deep learning}
-\rhead{Lecture 14: February 26, 2020}
+\lhead{IFT 6085 - Theoretical Principles for Deep Learning}
+% \rhead{Lecture 14: February 26, 2020}
+\rhead{Lecture 14: 11 March 2021}
 
 
 
@@ -79,7 +82,14 @@
 \newcommand{\ltheta}[0]{\ensuremath{\mathcal{L}^{(\boldsymbol{\Theta})}}}
 \newcommand{\lphi}[0]{\ensuremath{\mathcal{L}^{(\boldsymbol{\Phi})}}}
 
+\newcommand{\vecfield}{\vec{v}}
+\newcommand{\firstobj}{\mathcal{L}}
+\newcommand{\complex}{\mathbb{C}}
+
 \newcommand{\phth}[0]{\ensuremath{(\boldsymbol{\phi}, \boldsymbol{\theta})}}
+
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+
 %----------------------------------------
 % Header
 %----------------------------------------
@@ -104,6 +114,7 @@ The Numerics of GANs }
 
     \textbf{Scribes}\hfill
     \textbf{Instructor:}  Ioannis Mitliagkas\\
+    \textbf{Winter 2021:} Alan Chan\\
     \textbf{Winter 2020:} Oleksiy Ostapenko\\
     \textbf{Winter 2019:} Adam Ibrahim, William St-Arnaud, Bhairav Mehta\\
     \textbf{Winter 2018:} Joshua Romoff\\
@@ -131,86 +142,87 @@ The Numerics of GANs }
 In the previous lecture, we discussed the Wasserstein Generative Adversarial Network (WGAN), which uses the Wasserstein distance instead of the traditional Jenson-Shannon divergence. WGANs help alleviate the zero-gradient problem that arises when we have a mismatch in support between the generative and true distribution.
 \\
 
-In this lecture, we will focus on the training dynamics for GANs. Specifically, we will frame the training objective for GANs as a zero-sum game, and focus on one particular method, taken from \cite{MeschederNG17a}, that helps GANs convergence to Nash Equilibria. 
+In this lecture, we will focus on the training dynamics for GANs. Specifically, we will frame the training objective for GANs as a zero-sum game, and focus on one particular method, taken from \citet{MeschederNG17a}, that helps GANs convergence to Nash Equilibria. 
 
 \section{Contraction Mappings}
 
 \begin{defn}[Contraction Mappings.]\label{def:contraction mapping}
-    Let (X,d) be a metric space. A mapping $g:X \rightarrow X$ is a contruction mapping, or contraction, if there exists a constant $c$ , with $0\leq c < 1$, such that:
+    Let $(X,d)$ be a metric space. A mapping $g:X \rightarrow X$ is a contraction mapping, or contraction, if there exists a constant $c \in [0, 1)$ such that:
     \begin{align}
-        d(g(x),g(y)) \leq cd(x,y)
+        d(g(x),g(y)) \leq c\cdot d(x,y)
     \end{align}
-    for all $x,y \in X$. The scalar $c$ is called contraction modulus.
+    for all $x,y \in X$. The scalar $c$ is called contraction modulus or contraction constant. 
 \end{defn}
 
-Meaning that applying the operator G brings those trajectories closer together. We note that for some choise of distance metric $d$, $g$ might or might not be a contraction mapping.
+Intuitively, a contraction mapping $g$ brings trajectories closer together. We note that for some choice of distance metric $d$, $g$ might or might not be a contraction mapping. In the following, we will mostly be interested in $\mathbb{R}^n$ and thus will understand $d$ to be the induced metric given some norm $\|\cdot\|$ on $\reals^n$. In particular, $d(x, y) := \|x - y\|$. 
 
 \begin{defn}[Cauchy sequence.]
-   A sequence $\{x_k\}$ is called Cauchy sequence if for every $\epsilon > 0$, there exists some $K$ such that $|x_k-x_m|< \epsilon$ for all $k\geq K$ and $m\geq K$.
+   A sequence $\{x_k\}$ is called Cauchy sequence if for every $\epsilon > 0$, there exists some $K$ such that for all $k\geq K$ and $m \in \mathbb{N}$, we have $\|x_k-x_{k + m}\|< \epsilon$.
 \end{defn}
 
-\begin{prop}[Prop. A.26 Bertsekas \cite{Bertsekas/99}] \label{prop:contruction_mappint}[Contruction Mapping Theorem]
-Suppose that $g:X\rightarrow X$ is a contraction mapping with $c \in [0,1)$ and X is a closed subset of $\mathcal{R}^n$. Then:
+Although $g$ may or may not be a contraction for a given metric $d$, as long as we can find a single metric with respect to which $g$ is a contraction, we can guarantee that repeated application of $g$ will converge to a fixed point. 
+
+\begin{prop}[Prop. A.26 Bertsekas \citep{Bertsekas/99}] \label{prop:contruction_mappint}[Contraction Mapping Theorem]
+Suppose that $g:X\rightarrow X$ is a contraction mapping with $c \in [0,1)$ and X is a closed subset of $\reals^n$. Then:
 \renewcommand{\labelenumi}{(\alph{enumi})}
 \begin{enumerate}
-    \item (Existence and Uniqueness of a Fixed Point) The mapping $g$ has a unique fixed point $x*\in X$.
-    \item (Convergence Rate) For every initial vector $x^0 \in X$, the sequence $\{x^k\}$ generated by $x^{x+1}=g(x^k)$ converges to $x*$. In particular $||x^k-x^*|| \leq c^k||x^0-x^*||, \forall k \geq 0$.
+    \item (Existence and Uniqueness of a Fixed Point) The mapping $g$ has a unique fixed point $x^*\in X$. That is, $g(x^*) = x^*$.
+    \item (Convergence Rate) For every initial vector $x^0 \in X$, the sequence $\{x^k\}$ generated by $x^{x+1}=g(x^k)$ converges to $x*$. In particular $\|x^k-x^*\| \leq c^k\|x^0-x^*\|, \forall k \geq 0$.
 \end{enumerate}
 \end{prop}
-(Note, intuitively a fixed point is the element of a function's domain that is mapped to itself by this function.)
+% (Note, intuitively a fixed point is the element of a function's domain that is mapped to itself by this function.)
 
-\textbf{Proof Prop. \ref{prop:contruction_mappint}:} 
-We first prove $(a)$:
+\textbf{Proof of \Cref{prop:contruction_mappint}:} 
 
-For a sequence $\{x_k\}$ generated by $x^k-1 = g(x^k)$, we have that $g$ is a mapping from subset $X$ of $R^n$ to itself:
+We first prove $(a)$. Define the sequence $\{x_k\}_{k = 1}^\infty$ by $x^{k+1} = g(x^k)$, with $x_0$ arbitrary. Because $g$ is a contraction mapping,
 \begin{align}
-    ||g(x) - g(y)|| \leq c||x-y||,
+    \|x^{k+1} - x^k\| &= \|g(x^k)-g(x^{k-1})\| \leq c \|x^{k} - x^{k - 1}\|.
 \end{align}
-and therefore:
-\begin{align}
-    ||x^k+1 - x^k|| \leq c||x^k-x^k-1||, \forall k\geq1.
-\end{align}
-This implies 
+Upon iterating this inequality $k$ times, we obtain
 \begin{align}\label{eq:4} 
-    ||x^k+1 - x^k|| \leq c||x^1-x^0||, \forall k\geq1.
+    \|x^{k+1} - x^k\| \leq c^k\|x^1-x^0\|.
 \end{align}
-We can unroll the sequence and show that its a Cauchy sequence:
+Now, we will show that the $\{x_k\}$ form a Cauchy sequence. Let $\epsilon > 0$. We will solve for what we should set $K$ to be. 
 \begin{align*}
-    ||x^k+m - x^k|| \leq  \sum_{i=1}^m  ||x^k+i - x^k+i-1|| && \text{unroll the sequence}\\
-    \leq c^k(1+c+...+c^{m-1})||x^1-x^0|| && \text{plug in (\ref{eq:4}) and use telescoping sum}\\
-    \leq \frac{c^k}{1-c}||x^1-x^0|| && \text{use the property of geometric series}
+    \|x^{k+m} - x^k\| &\leq  \|x^{k + m} - x^{k + m - 1} + x^{k + m - 1} + \cdots + x^{k + 1} - x^k\| &&\triangleright \text{unrolling the sequence}\\
+    &\leq \sum_{i=1}^m   \|x^{k+i} - x^{k+i-1}\| && \triangleright \text{triangle inequality}\\
+    &\leq \sum_{i = 1}^m c^{k + i - 1}\|x^1-x^0\| && \triangleright\text{plug in \Cref{eq:4}}\\
+    &= c^k \|x^1 - x^0\|\sum_{i = 1}^m c^{ i - 1}\\
+    &\leq \frac{c^k}{1-c}\|x^1-x^0\| && \triangleright \text{bound by a geometric series since } c \in [0, 1).
 \end{align*}
-It can be concluded that $\{x_k\}$ is a Cauchy sequence and must converge to a limit $x^* \in X$ (since we assumed that $X$ is a closed set) (see Prop. A.5 in \cite{Bertsekas/99}).
+Now, let us solve for $K$.
+\begin{align*}
+    \frac{c^k}{1-c}\|x^1-x^0\| < \epsilon \iff c^k < \frac{\epsilon(1 - c)}{\|x^1 - x^0\|} \iff k > \frac{\log(\epsilon (1 - c)) - \log \|x^1 - x^0\| }{\log c}.
+\end{align*}
+Setting $K = \ceil{\frac{\log(\epsilon (1 - c)) - \log \|x^1 - x^0\| }{\log c}}$ suffices. Hence, $\{x_k\}$ is a Cauchy sequence. Because $\mathbb{R}^n$ is complete, every Cauchy sequence converges to a limit, so denote this limit of $\{x_k\}$ by $x^k$. As we assumed that $X$ is topologically closed, $x^* \in X$.\\ 
 
-We now show that $x^*$ is a fixed point. We first use the triangular inequality:
+We now show that $x^*$ is a fixed point with the triangle inequality.
 \begin{align*}
-    ||g(x^*)-x^*|| \leq ||g(x^*)-x^k||+||x^k-x^*|| \leq c||x^*-x^k-1||+||x^k-x^*||.
+    \|g(x^*)-x^*\| \leq \|g(x^*)-x^k\|+\|x^k-x^*\| \leq c\|x^*-x^{k-1}\|+\|x^k-x^*\|.
 \end{align*}
-Since $x^k$ converges to $x^*$, $g(x^*) = x^*$. Therefor $x^*$ is the fixed point og $g$.
+Since $x^k$ converges to $x^*$, taking limits shows that $g(x^*) = x^*$. We can prove that $x^*$ is unique by contradiction. If $y^*$ were another fixed point, then we would have
+\begin{align*}
+    \|x^*-y^*\|=\|g(x^*)-g(y^*)\| \leq c\|x^*-y^*\| < \|x^* - y^*\|,
+\end{align*}
+where the last inequality follows because $c < 1$. We cannot have $\|x^* - y^*\| < \|x^* - y^*\|$, so we have derived a contradiction. \\
 
-By contradiction we can prove that $x^*$ is unique. Suppose $y^*$ is another fixed point, then we could have:
+Now we prove $(b)$.
 \begin{align*}
-    ||x^*-y^*||=||g(x^*)-g(y^*)|| \leq c||x^*-y^*||,
+    \|x^{k}-x^*\| = \|g(x^{k - 1})-g(x*)\| \leq c\|x^{k}-x^*\| \leq c^k \|x_0 - x^*\|,
 \end{align*}
-but this implies that $x^*=y^*$, since this can only hold if $||x^*-y^*|$ or $c==1$, but $c\in [0,1)$ by definition of contraction mapping.
-
-Now we prove $(b)$. Here we have:
-\begin{align*}
-    ||x^{k'}-x^*||=||g(x^{k'})-g(x*)|| \leq c||x^{k'}-x^*|| \forall k' \geq 1.
-\end{align*}
-We can apply this relation successively fr $k'=k,k-1,...1$ to get the desired result.
+which is the same logic we used for \Cref{eq:4}.
 
 \hfill$\square$
 
 \section{Vector fields in optimization}
-Traditionally, in optimization, we look for $\btheta^* \in \argmin_{\btheta}\mathcal{L}^{(\btheta)}(\btheta)$ where the loss function $\mathcal{L}$ is smooth and differentiable. A typical strategy consists in looking for stationary points, i.e. points where the gradient of the loss function vanishes (although these may very well be maxima or saddle points too). In practice, gradient descent is often used to find local minima of $\mathcal{L}^{(\btheta)}$. This leads us to consider the vector field $\vec{v}(\btheta)=\nabla\mathcal{L}^{(\btheta)}(\btheta)$.
+Traditionally, in optimization, we look for $\btheta^* \in \argmin_{\btheta}\firstobj(\btheta)$ where the loss function $\firstobj$ is smooth and differentiable. A typical strategy consists in looking for stationary points: points where the gradient of the loss function vanishes (although these may very well be maxima or saddle points too). In practice, gradient descent is often used to find local minima of $\firstobj$. This procedure leads us to consider the following vector field: $\vec{v}(\btheta)=\nabla\firstobj(\btheta)$.
 \begin{defn}[Vector field]
     A vector field is a function mapping a subset of $\mathbb{R}^n$ to $\mathbb{R}^n$. In particular, a vector field $\vec{v}$ is said to be conservative if $\exists f: \mathbb{R}^n \rightarrow \mathbb{R}$ such that $\vec{v} = \nabla f$.
 \end{defn}
 
-Since $\vec{v}$ is conservative, the dynamics are straightforward. Indeed, the update rule $F_\eta(\btheta_t) \triangleq \btheta_{t+1} = \btheta_t - \eta \vec{v}(\vec{\btheta_t})$ means that the vector field at each point will point downhill and, if the function is convex, will trace a path to a minimum of the loss function (where $\vec{v}(\btheta) = 0$). We can see from the definition of $F_\eta$ for $\eta \neq 0$ that points where the gradient of $\mathcal{L}$ vanishes (equivalently, stationary points of $\vec{v}$) correspond to fixed points of $F_\eta$, i.e. $\btheta$ such that $F_\eta(\btheta) = \btheta$. One may retrieve convergence guarantees for gradient descent by looking at the Jacobian of $F_\eta$.
+Since $\vec{v}$ is conservative, the dynamics are straightforward. Indeed, the update rule $F_\eta(\btheta_t) \triangleq \btheta_{t+1} = \btheta_t - \eta \vec{v}(\vec{\btheta_t})$ means that the vector field at each point will point downhill and, if the function is convex, will trace a path to a minimum of the loss function (where $\vec{v}(\btheta) = 0$). We can see from the definition of $F_\eta$ for $\eta \neq 0$ that points where the gradient of $\mathcal{L}$ vanishes (equivalently, zeroes of $\vec{v}$) correspond to fixed points of $F_\eta$, i.e. $\btheta$ such that $F_\eta(\btheta) = \btheta$. One may retrieve convergence guarantees for gradient descent by looking at the Jacobian of $F_\eta$, which is a generalization of the derivative for vector-valued functions.
 
-\begin{defn}[Jacobian] A generalization of the derivative for vector-valued functions. For $f: \mathbb{R}^n \rightarrow \mathbb{R}^m$, the Jacobian J is defined as:
+\begin{defn}[Jacobian]  For $f: \mathbb{R}^n \rightarrow \mathbb{R}^m$, the Jacobian J is defined as:
 \[
     J = 
     \begin{bmatrix} 
@@ -225,12 +237,12 @@ The Jacobian of $F_\eta$ is given by $\nabla F_\eta(\btheta) = \mat{I} - \eta \n
 \begin{equation}
     \lambda (\nabla F_\eta (\btheta)) = 1 - \eta \lambda(\nabla \vec{v} (\btheta)),
 \end{equation}
-where $ \lambda(\nabla \vec{v} (\btheta))$ represents an eigenvalue of the Hessian of  $\mathcal{L}$, and $\lambda (\nabla F_\eta (\btheta))$ is the eigenvalue of the corresponding Jacobian. Prop. \ref{prop:bertsekas} provides a local convergence result, based on the spectral radius of the Jacobian of $F_\eta$.
+where $ \lambda(\nabla \vec{v} (\btheta))$ represents an eigenvalue of the Hessian of  $\mathcal{L}$, and $\lambda (\nabla F_\eta (\btheta))$ is the eigenvalue of the corresponding Jacobian. \Cref{prop:bertsekas} provides a local convergence result based on the spectral radius of the Jacobian of $F_\eta$.
 
-\begin{prop}[Prop. 4.4.1 Bertsekas \cite{Bertsekas/99}] \label{prop:bertsekas}
+\begin{prop}[Prop. 4.4.1 Bertsekas \citep{Bertsekas/99}] \label{prop:bertsekas}
 If the spectral radius $\rho_{max} \triangleq \rho (\nabla F_\eta (\vec{\theta}^*)) < 1$, then, for $\vec{\theta}_0$ in a neighborhood of $\vec{\theta}^*$, the distance of $\vec{\theta}_t$ to the stationary point $\vec{\theta }^*$ converges at a linear rate of $\mathcal{O}\left(\left(\rho_{max} + \epsilon \right)^t\right)$, $\forall \epsilon > 0$.
 \end{prop}
-(\textbf{Note}: generally this is a local convergence result - we require to start in a small neighbourhood around the solution.)
+(\textbf{Note}: generally this is a local convergence result - we must already start in a small neighbourhood around the solution.)
 In particular, as the spectral radius and the operator 2-norm coincide for symmetric or hermitian matrices, we have that if $\rho (\nabla F_\eta (\btheta^*)) = \max |\lambda (\nabla F_\eta (\btheta^*))| < 1$, fast local convergence is guaranteed by Prop. \ref{prop:bertsekas}.
 \par
 To illustrate this, consider a quadratic loss $\mathcal{L}^{(\theta)}(\theta) = \frac{h}{2} \theta^2$. Then the vector field is given by $v(\theta) = h\theta$ and its gradient by $\nabla v(\theta) = h$. Thus the eigenvalues of the Jacobian can be easily computed:
@@ -238,27 +250,26 @@ To illustrate this, consider a quadratic loss $\mathcal{L}^{(\theta)}(\theta) = 
     \lambda(\nabla F_\eta (\theta)) &= 1-\eta \lambda(\nabla v(\theta)) \nonumber \\
     &= 1 -\eta h
 \end{align}
-Notably, in the case of quadratics, Prop. \ref{prop:bertsekas} is a global convergence result. 
+Notably, in the case of quadratics, \Cref{prop:bertsekas} is a global convergence result. 
 \\
       
-\textbf{Proof outline of Prop. \ref{prop:bertsekas}.} 
-Note, that $\rho_{max} \triangleq \rho (\nabla F_\eta (\vec{\theta}^*)) < 1$ is a spectral radius at the solution $\theta^*$. To prove the   proposition we need to establish the spectral radius as a contraction mapping in the  neighbourhood around the solution, which would allow us to make statements about the convergence using the convergence property of the contraction mapping (see definition \ref{def:contraction mapping}). To do this, we want to show that for for any point in that neighbourhood, the spectral radius of the Jacobian at that point is within the unit circle, but we want to know the radius of that neighbourhood. For this \cite{Bertsekas/99} constructs an argument using a careful perturbation of the Jacobian, which will implicitly give us the radius of the neighbourhood. And if we start withing this neighbourhood, we converge to the solution with the rate given in the proposition.
+\textbf{Proof outline of \Cref{prop:bertsekas}.} 
+Note that $\rho_{max} \triangleq \rho (\nabla F_\eta (\vec{\theta}^*)) < 1$ is the spectral radius at the solution $\theta^*$. To prove \Cref{prop:bertsekas}, we need to establish that spectral radius is the contraction constant for $F_\eta$ in a neighbourhood around the solution. To do so, we want to show that for any point in that neighbourhood, the spectral radius of the Jacobian at that point is within the unit circle, but we want to know the radius of that neighbourhood. To this end, \citet{Bertsekas/99} constructs an argument using a careful perturbation of the Jacobian, which will implicitly give us the radius of the neighbourhood. And if we start within this neighbourhood, we converge to the solution with the rate given in the proposition.
 
-Here is the constructed argument.
-Intuitively: the eigenvalues of a matrix are a continuous mapping of the values of the matrix in a sense. That is, if I perturb the values of the matrix a bit, also the eigenvalues change a bit.
+Here is the constructed argument. Intuitively, the eigenvalues of a matrix are a continuous mapping of the values of the matrix in a sense. That is, if I perturb the values of the matrix a bit, the eigenvalues also change a bit.
 
 More formally, let $R^*$ denote the Jacobian of $F_\eta(\theta^*)$. We can approximate it with $R=R^*+\delta E$, where $\delta$ is a scalar and $E$ is some arbitrary perturbation matrix. By changing  $\delta$ we can control how much perturbation we add to $R^*$ - that is how accurate is our approximation of $R^*$. Then the $\lambda(R^*)$ is a continuous contraction mapping w.r.t. $\delta$. This means:
 \begin{align*}
 \exists \delta > 0, s.t.
     |\lambda_i(R)-\lambda_i(R^*)|<\epsilon.
-\end{align*}.
+\end{align*}
 Here, $\delta$ gives the neighborhood radius and $\epsilon$ influences the convergence rate.
 
 
 \section{GANs as games}
 Recall the min max formulation of GANs,
-\begin{equation}
-    \min_G \max_D V(D, G) = \E_{x \sim \Prob_x} [\log D(x)] + \E_{z \sim \Prob_z} [\log (1-D(G(z)))]
+\begin{equation}\label{eq:gan}
+    \min_G \max_D V(D, G) = \E_{x \sim \Prob_x} [\log D(x)] + \E_{z \sim \Prob_z} [\log (1-D(G(z)))].
 \end{equation}
 GAN optimization can be interpreted as a game, where each player is trying to minimize their own loss function. In that formalism, the goal of training is to find a Nash equilibrium.
 \begin{defn}[Nash Equilibrium]
@@ -267,17 +278,17 @@ GAN optimization can be interpreted as a game, where each player is trying to mi
         \bphi^* &\in \argmin_{\bphi\in \vec{\Phi}} \lphi (\bphi, \btheta^*) \nonumber \\
         \btheta^* &\in \argmin_{\btheta\in \vec{\Theta}} \ltheta (\bphi^*, \btheta)
     \end{align}
-    As with extremas in optimization, a Nash equilibrium can be local or global. A local Nash equilibrium is a point $\vec{z}^*$ where the above holds in a neighbourhood of $\vec{z}^*$.
+    As with extremas in optimization, a Nash equilibrium can be local or global. A local Nash equilibrium is a point $\vec{z}^*$ where the above minimization $\argmin$ statements hold in a neighbourhood of $\vec{z}^*$.
 \end{defn}
 Intuitively, a Nash equilibrium is a point where neither player can improve their situation unilaterally. \\
 \par
-As the losses involved often are smooth and differentiable, as well as the decision variables involved live in a continuous space, we look for local Nash equilibrium using Gradient Descent, which can either update simultaneously the parameters (i.e. $\btheta_{t+1}, \bphi_{t+1}$ only depend on $\btheta_t, \bphi_t$), or alternate updating w.l.o.g. $\btheta$ then $\bphi$ (in which case we may compute $\btheta_{t+1}$ first and then use it instead of $\btheta_t$ to compute $\bphi_{t+1}$). If we consider the vector field
+As the losses involved often are smooth and differentiable, we look for local Nash equilibria using gradient descent. We can either update simultaneously the parameters (i.e. $\btheta_{t+1}, \bphi_{t+1}$ only depend on $\btheta_t, \bphi_t$), or alternate updating $\btheta$ then $\bphi$ (in which case we may compute $\btheta_{t+1}$ first and then use it instead of $\btheta_t$ to compute $\bphi_{t+1}$), or vice versa. If we consider the vector field
 \begin{align}
     \vec{v}\phth = 
     \begin{bmatrix}
         \nabla_{\bphi} \lphi \phth \\
         \nabla_{\btheta} \ltheta \phth
-    \end{bmatrix}
+    \end{bmatrix},
 \end{align}
 one may express the gradient descent update operator as 
 \begin{align}
@@ -285,63 +296,61 @@ one may express the gradient descent update operator as
         \bphi \\
         \btheta
     \end{bmatrix}
-    - \eta \vec{v}\phth
+    - \eta \vec{v}\phth.
 \end{align}
-Note that in this case the vector field $\vec{v}$ is no longer conservative in general, as in contrast to optimisation, it no longer can be expressed as the gradient of a real-valued function (single objective function). In particular, it is a concatenation of the gradients of two objective functions and we may observe rotational dynamics. This is due to the fact that the Jacobian is no longer symmetric in general, and may have complex eigenvalues.
+Note that in this case the vector field $\vec{v}$ is no longer conservative in general, in contrast to the usual situation in optimization. In particular, $\vec{v}$ is a concatenation of the gradients of two objective functions and we may observe rotational dynamics. Rotational dynamics occur because the Jacobian is no longer symmetric in general, so we may have complex eigenvalues.
 
-For example, consider a bilinear game
-\begin{align}
-    \lphi (\phi, \theta) &= \theta \phi, \nonumber \\
-    \ltheta (\phi, \theta) &= -\theta \phi
-\end{align}
-Then, 
-\begin{align}
-    \vec{v} (\phi, \theta) = \begin{bmatrix}
-        \theta \\
-        -\phi
-    \end{bmatrix},
-    \nabla \vec{v} (\phi, \theta) = \begin{bmatrix}
-        0 & 1 \\
-        -1 & 0
-    \end{bmatrix},
-    \nabla F_\eta(\phi, \theta) = \begin{bmatrix}
-        1 & -\eta \\
-        \eta & 1
-    \end{bmatrix}
-\end{align}
-and since the eigenvalues of $\nabla\vec{v}$ are $-i$, $i$, (there is no real component) note that applying $\nabla\vec{v}$ 4 times to its eigenvectors yields back the eigenvectors. Note, the solution of the above game is \begin{align}
-    \begin{bmatrix}
-        \bphi \\
-        \btheta
-    \end{bmatrix}^* = 
-    \begin{bmatrix}
-        0 \\
-        0
-    \end{bmatrix},   
-\end{align}
+\begin{eg}
+    Consider the following bilinear game on $\mathbb{R}^2$. 
+    \begin{align*}
+        \lphi (\phi, \theta) &= \theta \phi, \nonumber \\
+        \ltheta (\phi, \theta) &= -\theta \phi.
+    \end{align*}
+    Then, 
+    \begin{align*}
+        \vec{v} (\phi, \theta) = \begin{bmatrix}
+            \theta \\
+            -\phi
+        \end{bmatrix},\quad
+        \nabla \vec{v} (\phi, \theta) = \begin{bmatrix}
+            0 & 1 \\
+            -1 & 0
+        \end{bmatrix},\quad
+        \nabla F_\eta(\phi, \theta) = \begin{bmatrix}
+            1 & -\eta \\
+            \eta & 1
+        \end{bmatrix}.
+    \end{align*}
+    First, the only stationary point of the game is $(0, 0)$, which is also the unique Nash equilibrium. \\
+    
+    Second, note that $\vecfield(\phi, \theta)$ is perpendicular to $(\phi, \theta)$. As $\eta \to 0$, the gradient flow $\partial_t (\phi(t), \theta(t)) = - \vecfield(\phi(t), \theta(t))$ traces out concentric circles in $\vec{\Phi} \times \vec{\Theta}$. Indeed, for an initial condition $(\phi(0), \theta(0)) = r\cdot  (\sin a, \cos a)$ (in reversed polar coordinates), the Picard-Lindelöf theorem guarantees the existence of a unique solution to this differential equation. The differential equation in this case is not particularly difficult, and the unique solution is given by $(\phi(t), \theta(t)) = r\cdot (\sin (t + a), \cos (t + a))$. It is clear that this solution cannot converge to zero unless $r = 0$. Hence, in the continuous limit, we expect that gradient descent cannot converge to the Nash equilibrium if not initialized to $(0, 0)$. \\
+    
+    Third, the characteristic polynomial of $\nabla \vecfield$ is $\lambda^2 + 1$, whose only zeroes are $\pm i$. In particular, there are no real eigenvalues. The eigenvalues of $\nabla F_\eta$ are then $1 \pm \eta i$. Written in polar coordinates, these are $\sqrt{1 + \eta^2} \exp(i\arctan(\pm \eta))$. In this form, it is clear that for any $\eta > 0$, applying $\nabla F_\eta$ to an eigenvector will result in a trajectory with increasing radius, which cannot converge to $(0, 0)$. As the eigenvalues of $\nabla F_\eta$ are distinct for $\eta > 0$, the eigenvectors of $\nabla F_\eta$ form a basis of $\complex^2$ (with complex coefficients), and in particular span $\mathbb{R}^2$. Every $(\phi, \theta) \in \mathbb{R}^2$ can be written as a linear combination of these eigenvectors (with possibly complex coefficients). As we showed that $\nabla F_\eta$ applied to the eigenvectors results in trajectories of increasing radius, the same is true for $(\phi, \theta)$ as long as $(\phi, \theta) \neq (0, 0)$. 
+\end{eg}
 
-which is a Nash Equilibrium.
+\section{Zero-sum games}
+In summary, rotational dynamics may hamper gradient descent from converging to stationary points. To say more about the effect of rotation, we will focus on a specific type of games: zero-sum games.
 
-\subsection{Zero-sum games}
-We assume that we are in the smooth two-player game setting where player $1$ is trying to maximize $f(\vec{\phi}, \vec{\theta})$, player $2$ is trying to maximize $g(\vec{\phi}, \vec{\theta})$, and $f,g$ are both smooth with respect to $\phth$. We also consider the GAN setting which can be cast as a Zero-sum game.
+\subsection{Preliminaries}
+
+We assume that we are in the smooth two-player game where player $1$ is trying to maximize $f(\vec{\phi}, \vec{\theta})$, player $2$ is trying to maximize $g(\vec{\phi}, \vec{\theta})$, and $f,g$ are both smooth with respect to $\phth$.
 \\
-
-Below describes a notational difference between \cite{MeschederNG17a} and what we saw in class:
-
-\begin{enumerate}
-    \item Within the paper, the functions are denoted as $f, g$, whereas in class, we used $\mathcal{L}^{(\Phi)}, \mathcal{L}^{(\Theta)}$. 
-    \item \cite{MeschederNG17a} looks at maximizing the functions $f, g$, whereas we are interested in minimization of $\mathcal{L}^{(\Phi)}, \mathcal{L}^{(\Theta)}$. To make these equivalent, we simply note that $$\mathcal{L}^{(\Phi)}(\vec{\phi}, \vec{\theta}) = -f(\vec{\phi}, \vec{\theta})$$
-    $$\mathcal{L}^{(\Theta)}(\vec{\phi}, \vec{\theta}) = -g(\vec{\phi}, \vec{\theta})$$
-    \item $\mathcal{L} \neq L$; the former denotes the functions we are optimizing, whereas the latter denotes a function of the vector field in \cite{MeschederNG17a}, as we will see below.
-    \item The step size in \cite{MeschederNG17a} is denoted as $h$. 
-\end{enumerate}
-
 \begin{defn}[Zero-sum games]
 \[
     \mathcal{L}^{(\Theta)}(\vec{\phi},\vec{\theta}) = - \mathcal{L}^{(\Phi)}(\vec{\phi},\vec{\theta})
 \]
 \end{defn}
-In zero-sum games, any gain by one player results in a loss to the other player and vice versa; we want to converge to a Nash Equilibrium. Here, the Jacobian of the vector field is given by
+In zero-sum games, any gain by one player results in a loss to the other player. An example of a zero-sum game is the GAN setting, where in \Cref{eq:gan} the discriminator maximizes $V(D, G)$ and the generator maximizes $-V(D, G)$. \\
+
+Below describes a notational difference between \citet{MeschederNG17a} and what we saw in class:
+\begin{enumerate}
+    \item Within the paper, the functions are denoted as $f, g$, whereas in class, we used $\mathcal{L}^{(\Phi)}, \mathcal{L}^{(\Theta)}$. 
+    \item \citet{MeschederNG17a} looks at maximizing the functions $f, g$, whereas we are interested in minimization of $\mathcal{L}^{(\Phi)}, \mathcal{L}^{(\Theta)}$. To make these equivalent, we simply note that $$\mathcal{L}^{(\Phi)}(\vec{\phi}, \vec{\theta}) = -f(\vec{\phi}, \vec{\theta})$$
+    $$\mathcal{L}^{(\Theta)}(\vec{\phi}, \vec{\theta}) = -g(\vec{\phi}, \vec{\theta})$$
+    \item $\mathcal{L} \neq L$; the former denotes the functions we are optimizing, whereas the latter denotes a function of the vector field in \citet{MeschederNG17a}, as we will see below.
+    \item The step size in \citet{MeschederNG17a} is denoted as $h$. 
+\end{enumerate}
+Here, the Jacobian of the vector field is given by
 \begin{align}
     \nabla\vec{v}\phth= 
     \begin{bmatrix} 
@@ -351,26 +360,29 @@ In zero-sum games, any gain by one player results in a loss to the other player 
 \end{align} 
 
 \begin{lem}
-For $0$-sum games, the following are equivalent:
-\begin{itemize}
-    \item $\nabla\vec{v}(\vec{\phi},\vec{\theta})$ is positive (semi)-definite
-    \item $\nabla^2_{\vec{\phi}} \mathcal{L}^{(\Phi)}(\vec{\phi}, \vec{\theta})$ is positive (semi)-definite and $\nabla^2_{\vec{\theta}} \mathcal{L}^{(\Phi)}(\vec{\phi}, \vec{\theta})$ is negative (semi)-definite
-\end{itemize}
+    For $0$-sum games, the following are equivalent:
+    \begin{itemize}
+        \item $\nabla\vec{v}(\vec{\phi},\vec{\theta})$ is positive (semi)-definite
+        \item $\nabla^2_{\vec{\phi}} \mathcal{L}^{(\Phi)}(\vec{\phi}, \vec{\theta})$ is positive (semi)-definite and $\nabla^2_{\vec{\theta}} \mathcal{L}^{(\Phi)}(\vec{\phi}, \vec{\theta})$ is negative (semi)-definite
+    \end{itemize}
 \end{lem}
-Using this lemma for a stationary point of $\vec{v}$ gives a sufficient condition for the existence of a local N.E. Indeed, this is what the following corollary says:
-\begin{cor}
-The following holds for all $0$-sum games:
-\begin{itemize}
-\item $\nabla\vec{v}(\vec{\phi}^*,\vec{\theta}^*)$ is positive semi-definite $\forall$ local N.E $(\vec{\phi^*},\vec{\theta^*})$
 
-\item If $(\vec{\phi^*},\vec{\theta^*})$ is a  stationary point of $\vec{v}$ and $\nabla\vec{v}(\vec{\phi^*},\vec{\theta^*})$ is positive definite, then $(\vec{\phi^*},\vec{\theta^*})$ is a local N.E.
-\end{itemize}
+Using this lemma for a zero of $\vec{v}$ (i.e., a fixed point of $F_\eta$ and thus a stationary point of $\lphi, \ltheta$) gives a sufficient condition for the existence of a local N.E. Indeed, this is what the following corollary says.
+
+\begin{cor}\label{cor:stationary-point}
+    The following holds for all $0$-sum games:
+    \begin{itemize}
+    \item $\nabla\vec{v}(\vec{\phi}^*,\vec{\theta}^*)$ is positive semi-definite $\forall$ local N.E $(\vec{\phi^*},\vec{\theta^*})$
+    
+    \item If $\vecfield(\vec{\phi^*},\vec{\theta^*}) = 0$ and $\nabla\vec{v}(\vec{\phi^*},\vec{\theta^*})$ is positive definite, then $(\vec{\phi^*},\vec{\theta^*})$ is a local Nash equlibrium. 
+    \end{itemize}
 \end{cor}
-Summarizing the previous results, if we have a stationary point $(\vec{\phi^*},\vec{\theta^*})$ of $\vec{v}$, $\nabla_{\vec{\phi}}^2 \mathcal{L}^{(\Phi)}(\vec{\phi},\vec{\theta})$ is positive definite and $\nabla_{\vec{\theta}}^2 \mathcal{L}^{(\Theta)}(\vec{\phi},\vec{\theta})$ is negative definite,  we have that $(\vec{\phi^*},\vec{\theta^*})$ is a local N.E. Now, in the gradient descent algorithm, we compute iterates $(\vec{\phi_{t+1}},\vec{\theta_{t+1}}) = (\vec{\phi_t},\vec{\theta_t}) - \eta \vec{v}((\vec{\phi_t},\vec{\theta_t}))$. Proposition \ref{prop:bertsekas} from the optimization section gives us a convergence guarantee for the gradient descent algorithm. We understand that the convergence rate is dictated by the largest (absolute) eigenvalue. A fixed point signifies that we are in a local optimum. In order to ensure convergence to the local N.E. $(\vec{\phi^*},\vec{\theta^*})$, we must start in a particular neighbourhood $U$ of $(\vec{\phi^*},\vec{\theta^*})$. In other words, we might not get convergence to a local N.E. unless we have a good initial point $(\vec{\phi_0},\vec{\theta_0})$.\\
 
-Recall the issue where  $\nabla\vec{v}$ is not symmetric and therefore the eigenvalues of $F_\eta$ and $\nabla\vec{v}$ are not necessarily real, they can have an imaginary component. The authors of \cite{MeschederNG17a} uncover a sufficient and necessary condition for the conditions of proposition~\ref{prop:bertsekas} to hold.
+Summarizing the previous results, if we have a zero $(\vec{\phi^*},\vec{\theta^*})$ of $\vec{v}$ such that $\nabla_{\vec{\phi}}^2 \mathcal{L}^{(\Phi)}(\vec{\phi},\vec{\theta})$ is positive definite and $\nabla_{\vec{\theta}}^2 \mathcal{L}^{(\Theta)}(\vec{\phi},\vec{\theta})$ is negative definite, then $(\vec{\phi^*},\vec{\theta^*})$ is a local N.E. Now, in the gradient descent algorithm, we compute iterates $(\vec{\phi_{t+1}},\vec{\theta_{t+1}}) = (\vec{\phi_t},\vec{\theta_t}) - \eta \vec{v}(\vec{\phi_t},\vec{\theta_t})$. Proposition \ref{prop:bertsekas} gives us a convergence guarantee for the gradient descent algorithm. We understand that the convergence rate is dictated by the largest (absolute) eigenvalue. A fixed point signifies that we are in a local optimum. In order to ensure convergence to the local N.E. $(\vec{\phi^*},\vec{\theta^*})$, we must start in a particular neighbourhood $U$ of $(\vec{\phi^*},\vec{\theta^*})$. In other words, we might not get convergence to a local N.E. unless we have a good initial point $(\vec{\phi_0},\vec{\theta_0})$.\\
 
-\begin{lem}[Lemma 4 of Mescheder et al. 2017 \cite{MeschederNG17a}] Assume that $A \in \mathbb{R}^{d\times d}$. If $\forall \lambda \in \sigma(A)$ (where $\sigma(A)$ denotes the spectrum of $A$) we have $Re(\lambda)<0$ and $h>0$ then:
+Recall that $\nabla\vec{v}$ is not necessarily symmetric, and therefore the eigenvalues of $F_\eta$ and $\nabla\vec{v}$ are not necessarily real.  \citet{MeschederNG17a} uncover a sufficient and necessary condition for the conditions of \Cref{prop:bertsekas} to hold.
+
+\begin{lem}[Lemma 4 of Mescheder et al. 2017 \citep{MeschederNG17a}] Assume that $A \in \mathbb{R}^{d\times d}$ and let $h > 0$. If $\forall \lambda \in \sigma(A)$ (where $\sigma(A)$ denotes the spectrum of $A$) we have $Re(\lambda)<0$ then:
 \[
 |\lambda| < 1 \quad \forall \lambda \in \sigma(I+hA)
 \]
@@ -387,12 +399,32 @@ h < \frac{1}{|Re(\lambda)|} \frac{2}{1+(\frac{Im(\lambda)}{Re(\lambda)})^2}
     \label{fig:eval}
 \end{figure}
 
-So, in order for the eigenvalues to be within the unit-ball, the learning rate must be made sufficiently small. Figure~\ref{fig:eval} illustrates this effect. If either the real or imaginary component have very large magnitude then a very small learning rate is needed to project the eigenvalues back into the unit ball (remark: in optimization since the Hessian is symmetric, the we only had real eigenvalues; here, because the vector field is not conservative, we lost the symmetry property of $\nabla v$, whose eigenvalues can be complex numbers). 
+In order for the eigenvalues to be within the unit-ball, the learning rate must be made sufficiently small. Figure~\ref{fig:eval} illustrates this effect. If either the real or imaginary component has a large magnitude, then a very small learning rate is needed to project the eigenvalues back into the unit ball. %(remark: in optimization since the Hessian is symmetric, the we only had real eigenvalues; here, because the vector field is not conservative, we lost the symmetry property of $\nabla v$, whose eigenvalues can be complex numbers). 
 \\
 
-Since we need to ensure that the eigenvalues stay within the unit ball, we can at each step tune the learning rate or momentum parameter. We can also try to optimize a completely different objective, as shown below. All approaches try to tune the optimization with the hope of making the vector field \textit{more conservative}. Intuitively, we want to control the rotations in the optimization, which will help us converge to local optima faster and more reliably.
+\subsection{Consensus Optimization}
+Since we need to ensure that the eigenvalues stay within the unit ball, we can tune the learning rate or momentum parameter. We will have more to say about this approach in \Cref{sec:neg-mom}. We can also try to optimize a completely different objective, which we discuss for the remainder of this section. Both of these approaches try to make the relevant vector field more conservative: controlling the rotations in the dynamics will help us to converge to local optima faster and more reliably.
 \\
-So we have the problem that the eigenvalues have strong imaginary component, and so this causes strong rotations. In order to keep those eigenvalues in the unit circle (that is to have convergence guarantees) we are forced to use a very low, tiny learning rate (so long convergence). One of the ocntributions is consensus approach, where we modigy the vector field and translate the eigenvalues in that directions. So we make the reak component of the eigenvalues of the Jacobian of the vector field more positive, which pushes the eigenvalues of the Jacobian of the operator more towards the left. And so we can use a bigger step size. It improves the ration of the real to imaginary component - gives a stronger real component - makes the vector field more concervative?? -> the rotations are less strong.
+%So we have the problem that the eigenvalues have strong imaginary component, and so this causes strong rotations. In order to keep those eigenvalues in the unit circle (that is to have convergence guarantees) we are forced to use a very low, tiny learning rate (so long convergence). 
+
+To see what other objectives we could optimize, let's recall that we want to find Nash equilibria, but probably the least we can expect to do is to find local Nash equilibria. \Cref{cor:stationary-point} says that a sufficient condition for $(\bphi^*, \btheta^*)$ to be a local Nash equilibrium is if $\vecfield(\bphi^*, \btheta^*) = 0$ and $\nabla \vecfield(\bphi^*, \btheta^*)$ is positive-definite. To find a zero of $\vecfield$, a simple approach is just to have both players minimize the following.
+\begin{align}\label{eq:norm-grad-optim}
+    L(\vec{\phi}, \vec{\theta}) = \frac{1}{2}\|\vec{v}(\vec{\phi}, \vec{\theta})\|^2
+\end{align}
+
+Panel 1 of Figure \ref{fig:vfnog} shows an example vector field $\vecfield$. Unfortunately, in practice, this optimization is unstable as the minimization causes saddle points to become attractive, as shown in Panel 2 of Figure \ref{fig:vfnog}. Recall that our zero has to be such that $\nabla v$ at the zero is positive definite. Another difficulty is that \Cref{eq:norm-grad-optim} involves Hessians of the $\lphi, \ltheta$, which can get computationally expensive. %This is also a second order optimization, which is expensive, yet can be accomplished using for example Jacobian vector product. This kind of approach also makes bad stationary points attractive (also saddle points).
+
+Our idea was not bad though, so we can try to weaken it slightly while still respecting the original dynamics. \citet{MeschederNG17a} propose a \textit{consensus approach}, where $L(\vec{\phi}, \vec{\theta})$ effectively becomes a regularizer for each player's loss. In particular, we now have the following objectives per player, with hyperparameter $\gamma$.
+\begin{align}\label{eq:consensus-optim}
+    \lphi(\bphi, \btheta) + \gamma \,L(\vec{\phi}, \vec{\theta})\\
+    \ltheta(\bphi, \btheta) + \gamma \, L(\vec{\phi}, \vec{\theta})
+\end{align}
+
+%If certain stationary points of $\vecfield(\bphi, \btheta)$ correspond to stationary points, why not minimize the following instead? %, where we modify the vector field and translate the eigenvalues in that directions. So we make the real component of the eigenvalues of the Jacobian of the vector field more positive, which pushes the eigenvalues of the Jacobian of the operator more towards the left. And so we can use a bigger step size. It improves the ration of the real to imaginary component - gives a stronger real component - makes the vector field more concervative?? -> the rotations are less strong.
+
+% To solve this issue while still maintaining the benefits of the conservative vector field, the authors propose a gradient penalty, using the above norm of gradient as regularizer controlled by a hyperparameter $\gamma$. 
+
+In practice, with the right $\gamma$, one can get a combined field that can avoid the spurious stationary points associated with the conservative field $-\nabla L$ (Panel 3 of Figure~\ref{fig:vfnog}). This combination leads to smoother optimization and \citet{MeschederNG17a} show that the approach eigenvalues back within the unit ball, while still allowing for larger learning rates.
 
 \begin{figure}[h!]
     \centering
@@ -401,22 +433,12 @@ So we have the problem that the eigenvalues have strong imaginary component, and
     \label{fig:vfnog}
 \end{figure}
 
-The first approach that we can take to tame the rotational dynamics in the vector field is to optimize a completely different objective altogether. As seen in \cite{MeschederNG17a}, we can try to minimize the norm of the gradient. If we have a vector field $\vec{v}$, shown in Panel 1 of Figure \ref{fig:vfnog}, we can optimize the following instead:
-\begin{align}
-    L(\vec{\phi}, \vec{\theta}) = \frac{1}{2}||\vec{v}(\vec{\phi}, \vec{\theta})||^2
-\end{align}
+\section{Negative Momentum}\label{sec:neg-mom}
 
-Unfortunately, in practice, this optimization is unstable as the minimization causes saddle points to become attractive, as shown in Panel 2 of Figure \ref{fig:vfnog}. This is also a second order optimization, which is expensive, yet can be accomplished using for example Jacobian vector product. This kind of approach also makes bad stationary points attractive (also saddle points).
-\\
+The previous section showed that for smoother optimization, we need to control the eigenvalues. One way to do so is to a regularizer that shifts the eigenvalues. Effectively, we want to control the rotations in the vector field, which are troublesome as they slow (or prevent) convergence. In this section, we describe the approach taken by \citet{Gidel18NegMom}, which introduces \textit{negative momentum} and describes how it can be used to tame the GAN optimization dynamics.
 
-To solve this issue while still maintaining the benefits of the conservative vector field, the authors propose a gradient penalty, using the above norm of gradient as regularizer controlled by a hyperparameter $\gamma$. In practice, with the right $\gamma$, one can get a combined field that may avoid the false equilibria associated with the conservative field $-\nabla L$ (Panel 3 of Figure~\ref{fig:vfnog}). This combination leads to smoother optimization, as it intuitively scales back the eigenvalues back within the unit ball, while still allowing for larger learning rates.
-
-\section{Negative Momentum}
-
-The previous section showed that for smoother optimization, we need to control the eigenvalues, which can be done by adding a regularizer that shifts the eigenvalues. Effectively, we want to control the rotations in the vector field, which are troublesome as they slow (or prevent) convergence. In this section, we describe the approach taken by \cite{Gidel18NegMom}, which introduces \textit{negative momentum} and describes how it can be used to tame the GAN optimization dynamics.
-
-\subsection{Momentum}
-We recall the \textit{heavy ball} method of momentum, originally introduced by \cite{POLYAK19641}:
+\subsection{Notation}
+We recall the \textit{heavy ball} method of momentum, originally introduced by \citet{POLYAK19641}:
 \begin{align}
 \vec{\theta}_{t+1} = \vec{\theta}_t - \eta\vec{v}(\vec{\theta}_t) + \beta(\vec{\theta}_t - \vec{\theta}_{t-1})
 \end{align}
@@ -424,16 +446,15 @@ We recall the \textit{heavy ball} method of momentum, originally introduced by \
 where the momentum term is controlled with hyperparameter $\beta$.
 \\
 
-In the following, we describe the approach of \cite{Gidel18NegMom}, which provides analysis of \textit{why} large, positive values of momentum are harmful in game optimization, while also providing evidence on how negative momentum (i.e negative values of $\beta$) can be helpful in certain types of zero-sum games.
+% In the following, we describe the approach of \citet{Gidel18NegMom}, which provides analysis of \textit{why} large, positive values of momentum are harmful in game optimization, while also providing evidence on how negative momentum (i.e negative values of $\beta$) can be helpful in certain types of zero-sum games.
 \\
 
 We begin by rewriting the momentum equation for use with simultaneous, 2-player gradient descent as follows:
 $$\vec{x}_{t+1} = \vec{x}_t - \eta\vec{v}(\vec{x}_t) + \beta(\vec{x}_t - \vec{x}_{t-1}), \quad \vec{x}_t = (\vec{\theta}_t, \vec{\phi}_t)$$
 
-Using the above definition, we can also define the fixed point operator, which requires a state-space augmentation.
-
-\begin{align}
-    F_{\eta, \beta}(\vec{x}_{t+1}, \vec{x}_t) := 
+Using the above definition, we can also define an update operator for both $x_{t + 1}$ and $x_t$.%, which requires a state-space augmentation.
+\begin{align}\label{eq:momentum-operator}
+    (\vec{x}_{t + 1}, \vec{x}_t) = F_{\eta, \beta}(\vec{x}_{t}, \vec{x}_{t - 1}) := 
     \begin{bmatrix}
         \vec{I}_n & \vec{0}_n \\
         \vec{I}_n & \vec{0}_n
@@ -458,9 +479,45 @@ Using the above definition, we can also define the fixed point operator, which r
     \end{bmatrix} 
 \end{align}
 
-\subsection{Negative Momentum in Games}
+\subsection{Eigenvalues}
+Theorem 3 of \citet{Gidel18NegMom} characterizes the eigenvalues of $\nabla F_{\eta, \beta}$ at a stationary point. 
+\begin{thm}[Theorem 3 of \citet{Gidel18NegMom}]\label{thm:momentum-eigenvalues}
+    Let $(\omega^*)$ be a zero of $\vecfield$. The eigenvalues of $\nabla F_{\eta, \beta}(\omega^*, \omega^*)$ are the following.
+    \begin{align}
+        \mu_{\pm} (\beta, \eta, \lambda) := (1 - \eta \lambda + \beta) \frac{1 \pm \sqrt{\Delta}}{2},
+    \end{align}
+    where $\lambda$ is an eigenvalue of $\nabla \vecfield(\omega^*)$, $\Delta := 1 - \frac{4\beta }{(1 - \eta \lambda + \beta)^2}$ , and $\sqrt{\Delta}$ denotes the complex square root of $\Delta$ with positive real part. Moreover, we have the following Taylor approximations.
+    \begin{align}
+        \mu_+(\beta, \eta, \lambda) &:= 1 - \eta \lambda - \beta \frac{\eta \lambda}{1 - \eta \lambda} + \mathcal{O}(\beta^2)\\
+        \mu_-(\beta, \eta, \lambda) &:= \frac{\beta }{1 - \eta \lambda } + \mathcal{O}(\beta^2).
+    \end{align}
+\end{thm}
+The Taylor approximations in \Cref{thm:momentum-eigenvalues} make clear that $\beta >> 0$ leads to large eigenvalues. Interestingly, \citet{Gidel18NegMom} find through numerical optimization that the value of $\beta$ that minimizes $\max\{\mu_+, \mu_-\}$ is negative. These results suggest investigating the effect of negative momentum further. 
 
-The paper goes on to show that in a special class of games, called \textit{bilinear games}, a negative momentum parameter can be optimal (and necessary for convergence) for alternated gradient descent (in a bilinear game, simultaneous gradient descent with any choice of momentum parameters may diverge). Figure \ref{fig:bilinearconv} shows an illustration of how negative momentum can lead to convergence with alternated gradient descent, as well as a depiction of how various other methods lead to divergence. 
+\subsection{Negative Momentum in Smooth Bilnear Games}
+To understand negative momentum further, \citet{Gidel18NegMom} analyze the following game.
+\begin{align*}
+    \min_{\btheta} \max_{\bphi} \btheta^\top A \bphi + \btheta^\top b  + c^\top \bphi.
+\end{align*}
+If we assume that an equilibrium exists, \citet{Gidel18NegMom} show that a change of variables results in the following equivalent problem.
+\begin{align}\label{eq:smooth-bilinear-game}
+    \min_{\btheta} \max_{\bphi} \btheta^\top A \bphi
+\end{align}
+If we perform simultaneous gradient descent/ascent (SGDA), our parameter updates are the following:
+\begin{align*}
+    \btheta_{t + 1} &= \btheta_t - \eta_1 A \bphi_t  + \beta_1(\btheta_t - \btheta_{t - 1})\\
+    \bphi_{t + 1} &= \bphi_t - \eta_2 A^\top \btheta_t  + \beta_2(\bphi_t - \bphi_{t - 1}),
+\end{align*}
+where $\eta_1, \eta_2 > 0$ are step-sizes. Theorem 5 of \citet{Gidel18NegMom} shows that simultaneous gradient descent/ascent diverges for \textit{any} $\eta_1, \eta_2$ if $\beta \geq -\frac{1}{16}$. One might hope that negative enough momentum provides convergence here, but unfortunately we are still out of luck. Nevertheless, it turns out that negative momentum can help us where non-negative momentum fails if we perform alternating gradient descent/ascent (AGDA).
+\begin{align*}
+    \btheta_{t + 1} &= \btheta_t - \eta_1 A \bphi_t  + \beta_1(\btheta_t - \btheta_{t - 1})\\
+    \bphi_{t + 1} &= \bphi_t - \eta_2 A^\top \btheta_{t + 1}  + \beta_2(\bphi_t - \bphi_{t - 1}),
+\end{align*}
+The only difference is that in AGDA, we use the updated value of $\btheta_{t + 1}$ to compute the update for $\bphi_{t + 1}$. While this update can still diverge for positive momentum values, Theorem 6 of \citet{Gidel18NegMom} evinces a negative momentum setting that guarantees convergence to the Nash equilibrium for some step-sizes. 
+
+% The paper goes on to show that in a special class of games, called \textit{bilinear games}, a negative momentum parameter can be optimal (and necessary for convergence) for alternated gradient descent (in a bilinear game, simultaneous gradient descent with any choice of momentum parameters may diverge). 
+
+Figure \ref{fig:bilinearconv} shows an illustration of how negative momentum can lead to convergence with AGDA, as well as a depiction of how various other methods lead to divergence. 
 
 \begin{figure}[h!]
     \centering
@@ -470,11 +527,12 @@ The paper goes on to show that in a special class of games, called \textit{bilin
 \end{figure}
 
 
-For general games, the paper continues on to show that negative momentum can be helpful as well, and show strong empirical evidence on training "saturating" GANs (i.e. where we get very small or zero gradients) with negative momentum.
+For general games, \citet{Gidel18NegMom} continues on to show that negative momentum can be helpful as well, and show strong empirical evidence on training "saturating" GANs (i.e. where we get very small or zero gradients) with negative momentum.
 
  
 
 
+\clearpage
 
 
 %----------------------------------------

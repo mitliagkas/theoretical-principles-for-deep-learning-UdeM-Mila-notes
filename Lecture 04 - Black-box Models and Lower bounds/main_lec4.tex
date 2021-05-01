@@ -1332,7 +1332,7 @@ Then, the sequence $\left\{x^{(n)}\right\}_{n = 1}^\infty$ defined by $x^{(n)} =
 Trivial, try to prove for yourself!
 \end{proof}
 
-\subsection*{Nuances in the Proof of Theorem~\ref{thethm}}
+\subsection*{A Nuance in the Proof of Theorem~\ref{thethm}}
 These results above reveal how we came up with the solution 
 $
     \evx^{\ast}_t 
@@ -1399,5 +1399,6 @@ It turns out that $P$ has two distinct real roots:
     }
 \end{align*}
 We chose $r_2$ and used the results above.
-Note that in our solution, we did not have contributions from $r_1$ because $r_1 > 1$ and thus, leads to a lower bound that 
+Note that in our solution, we did not have contributions from $r_1$ because $r_1 > 1$ and thus, leads to a lower bound that explodes.
+Since our black box approach optimizes the objective so that $f(\vx^{(t)})$ approaches to $f(\vx^{\ast})$, thereby decreasing the gap, we will not have an exploding lower bound.
 \end{document}

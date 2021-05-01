@@ -104,8 +104,9 @@ Please report any bugs to the scribes or instructor.
 
 \section{Summary}
 
-In the previous lectures we summarized our analysis of upper bounds for the rate of convergence of gradient descent when applied to convex objective functions with various properties. We saw that using $\beta$-smoothness and $\alpha$-strongly convex  functions give exponential rate of convergence.  These upper bounds are summarized in Table~\ref{tab:upper_bounds}.
-
+Previously, we summarized our analysis of upper bounds for the rate of convergence of gradient descent when applied to convex objective functions with various properties. 
+We saw that using $\beta$-smoothness and $\alpha$-strongly convex functions, we get the fastest exponential rate of convergence.  
+These upper bounds are summarized in Table~\ref{tab:upper_bounds}.
 \begin{table}[H]
 \centering
     {
@@ -137,10 +138,13 @@ In the previous lectures we summarized our analysis of upper bounds for the rate
 \label{tab:upper_bounds}
 \end{table}
 
-In the last lecture we derived a lower bound for the rate of convergence of any black box model on $\beta$-smoothness and $\alpha$-strongly convex objectives by constructing the ``hardest function'' in that class of functions. Our analysis left a gap between the lower bound and the upper bound of the rate of convergence of gradient descent which we aim to fill in this lecture by showing that accelerated methods achieve this lower bound.
+Also, in the last lecture, we derived a lower bound for the rate of convergence of any black box model on $\beta$-smooth and $\alpha$-strongly convex objectives by constructing the ``hardest function'' in that class of functions. 
+Our analysis left a gap between the lower bound and the upper bound of the rate of convergence of gradient descent, which we aim to fill in this lecture by showing that accelerated methods achieve this lower bound.
 \\
  
-In this lecture we first analyze how the step size affects the convergence rate of gradient descent for quadratic objectives. Then we introduce an alternative convergence proof technique using eigenvalue analysis of operators. Subsequently, we introduce Polyak's momentum~\cite{polyak1964some} (a.k.a. heavy ball method) and some convergence guarantees on the same objectives. This analysis allows us to close the gap between the upper bound and lower bound on the convergence rate of gradient descent for quadratic functions. These notes are based on~\cite{goh2017why, zhang2017yellowfin, nesterov1998introductory}.
+In this lecture we first analyze how the step size affects the convergence rate of gradient descent for quadratic objectives. 
+Then, we introduce an alternative convergence proof technique using eigenvalue analysis of operators.
+Subsequently, we introduce Polyak's momentum~\cite{polyak1964some} (a.k.a. heavy ball method) and some convergence guarantees on the same objectives. This analysis allows us to close the gap between the upper bound and lower bound on the convergence rate of gradient descent for quadratic functions. These notes are based on~\cite{goh2017why, zhang2017yellowfin, nesterov1998introductory}.
 
 \section{Convergence of gradient descent}
 
