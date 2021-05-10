@@ -264,9 +264,9 @@ We used the union of all the hypothesis $h$ to  bound our hypothesis of interest
 What this tells us is that with probability at least $1-\delta$ we have: $$|\hat{R}_s[h_S]-R[h_S]| \leq \sqrt[]{\frac{\log\frac{1}{P(h_s)}+\log\frac{2}{\delta}}{2n}}$$
 \end{proof}
 
-Notice that this bound is no longer dependent on $|\mathcal{H}|$ and instead has the term $\log \frac{1}{P(h)}$. If our prior distribution gives more probability to $h$ than this term will decrease therefore giving a tighter bound and vise versa. If, however, we don't give any probability to a hypothesis $h$ (i.e $P(h) = 0$) then $\log \frac{1}{P(h)}$ will be undefined which provides a vacuous bound. Therefore, having a tight generalization bound can be reduced to carefully designing a prior distribution that corresponds to the learning algorithm and learned hypothesis $h_S$. The following example sheds light on designing a prior would look like:
+Notice that this bound is no longer dependent on $|\mathcal{H}|$ and instead has the term $\log \frac{1}{P(h)}$. If our prior distribution gives more probability to $h$ than this term will decrease therefore giving a tighter bound and vise versa. If, however, we don't give any probability to a hypothesis $h$ (i.e $P(h) = 0$) then $\log \frac{1}{P(h)}$ will be undefined which provides a vacuous bound. Therefore, having a tight generalization bound can be reduced to carefully designing a prior distribution that corresponds well to the peculiarities of the learning algorithm and learned hypothesis $h_S$. The following example sheds light on how designing a prior would look like:
 
-% \vspace*{0.5cm}
+\vspace*{0.5cm}
 \begin{figure}[H]
     \captionsetup{justification=centering}
 	%\includegraphics[scale=0.9,center]{schema.png}
@@ -321,7 +321,7 @@ Notice that this bound is no longer dependent on $|\mathcal{H}|$ and instead has
     \label{fig:l2_reg}
 \end{figure}
 
-\vspace*{0.5cm}
+% \vspace*{0.5cm}
 \begin{figure}[H]
     \captionsetup{justification=centering}
 	\includegraphics[scale=0.9,center]{circle.png}
@@ -408,7 +408,7 @@ Here are some examples of posteriors:
     % \item Let $Q=\mathcal{N}(h_S, I)$, that is \textcolor{red}{some interpretation about what this represents. since it has the same expectation as the 1st entry} $KL(Q||P)$ is finite and therefore, we can find bounds for $R_S[h]$. For example, if $R_s[h]$ is convex around $h$, Jensen's inequality will give $R[h]\leq \mathbb{E}_{h\sim Q}[R[h]]$.
 \end{enumerate}
 
-One complication with PAC-Bayes bound is that it doesn't give us a generalization guarantee for a particular hypothesis $h$. Instead, it gives an upper bound over draws from distribution $Q$. In other words, if we randomly sample a hypothesis from distribution $Q$, \emph{in expectation}, the generalization gap is going to be bounded by the aforementioned term (\ref{pacbayesbound}).
+One complication with PAC-Bayes bound is that it doesn't give us a generalization guarantee for a particular hypothesis $h$. Instead, it gives an upper bound over draws from distribution $Q$. In other words, if we randomly sample a hypothesis from distribution $Q$, then, \emph{in expectation}, the generalization gap is going to be bounded by the aforementioned term (\ref{pacbayesbound}).
 
 \vspace{0.5cm}
 \bibliography{Refs/lec8}
