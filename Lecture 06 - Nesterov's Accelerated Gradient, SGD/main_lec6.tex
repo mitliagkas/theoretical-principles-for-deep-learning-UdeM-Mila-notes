@@ -206,13 +206,13 @@ By construction,  $\forall \ x_1, x_2, \|\nabla f(x_1)-\nabla f(x_2)\| \leq 25\|
 \nabla^2 f(x) =
 \begin{cases}
     25 &  x < 1 \\
-    1   &  \leq x < 2 \\
+    1   & 1 \leq x < 2 \\
     25 & x\geq 2
 \end{cases}
 \end{gather}
 implying $\nabla^2 f \geq 1>0$, therefore $f$ is 1-strongly convex.\\
 
-In \figurename \ \ref{iteratesPolyak} are displayed the first 50 iterates of Polyak's momentum algorithm applied to $f$, using $\alpha=\frac{1}{9}$, $\beta=\frac{4}{9}$ and $x_0=3.3$. The output values are bound to cycle through 3 points indefinitely.
+\figurename \ \ref{iteratesPolyak} showns the first 50 iterates of Polyak's momentum algorithm applied to $f$, using $\alpha=\frac{1}{9}$, $\beta=\frac{4}{9}$ and $x_0=3.3$. The output values are bound to cycle through 3 points indefinitely.
 
 \begin{figure}
   \centering
@@ -259,8 +259,8 @@ On the other hand, $\forall \ \omega>0$ fixed, $f_{\omega, \epsilon} \to f_0$ un
 Considering the Polyak's algorithm on this family of functions and their limit, we have optimal tuning for $f_0$ with step size $\alpha = \frac{1}{25}$ and momentum $\beta = 0$, while for $f_{\omega,\epsilon}$ the optimal tuning gives a value for the momentum 
 $$\beta = \le(\dfrac{\sqrt{\kappa} -1}{\sqrt{\kappa}+1}\ri)^2 \approx 1 \qquad \text{for large values of } \omega.$$
 
-This mismatch between condition numbers of $\{f_{\omega,\epsilon}\}$ and their limit $f_0$, while a uniform convergence result holds, may suggest that for some families of functions Polyak's tuning is problematic. Otherwise said: there could be a better strategy for tuning the step size and the momentum parameter that can still yield convergence; finally, the quest for a better tuning could require a new innovative definition of condition number that would allow to extend convergence results to functions that are not simply quadratic. 
-Indeed, numerical evidence shows that Polyak's momentum has still a lot of potential to be successfully applied to a broad class of functions.
+This mismatch between condition numbers of $\{f_{\omega,\epsilon}\}$ and their limit $f_0$, while a uniform convergence result holds, may suggest that for some families of functions Polyak's tuning is problematic. Otherwise said: there could be a better strategy for tuning the step size and the momentum parameter that can still yield convergence; finally, the quest for a better tuning could require a new innovative definition of condition number that would allow extending convergence results to functions that are not simply quadratic. 
+Indeed, numerical evidence shows that Polyak's momentum has still a lot of potentials to be successfully applied to a broad class of functions.
 
 
 %Many questions remains open: is the set of strongly convex, Lipschitz function for which Polyaks' momentum does not work consistently big? (this would require embedding a measure on this set ....)
@@ -274,7 +274,7 @@ Indeed, numerical evidence shows that Polyak's momentum has still a lot of poten
 
 \subsection{Motivation}
 
-In the last section, we saw that Polyak's momentum algorithm can fail to converge for some carefully built convex optimization problems. Leveraging the idea of momentum introduced by Polyak, Nesterov introduced a slightly altered update rule that has been shown to converge not only for quadratic functions, but for general convex functions. 
+In the last section, we saw that Polyak's momentum algorithm can fail to converge for some carefully built convex optimization problems. Leveraging the idea of momentum introduced by Polyak, Nesterov introduced a slightly altered update rule that has been shown to converge not only for quadratic functions but for general convex functions. 
 %Despite extending the hypothesis space for $f$, this algorithm still manages to achieve an acceleration rate comparable to the heavy-ball method. 
 The main ideas of this demonstration are presented at the end of this section.\\
 
@@ -298,7 +298,7 @@ The Nesterov's Accelerated Gradient algorithm is described as follow by \citet{S
 
 % Note: Despite being slightly different from the formulation seen in class, this writing makes it much easier to see what's going on. It is taken directly from "On the importance of initialization and momentum in deep learning""
 
-The quantity $v_{t+1}$ can be thought of as the velocity at time $t$ or as the displacement vector: it is calculated by applying the  momentum $\beta$ to the previous $v_t$ displacement and subtracting the gradient step to $x_t + \beta v_t$, which is the point where the momentum term leads from $x_t$. 
+The quantity $v_{t+1}$ can be thought of as the velocity at time $t$ or as the displacement vector: it is calculated by applying the momentum $\beta$ to the previous $v_t$ displacement and subtracting the gradient step to $x_t + \beta v_t$, which is the point where the momentum term leads from $x_t$. 
 Rewriting these two sequences as one yields:
 \begin{equation} \label{eq:2}
 	x_{t+1} = x_t + \beta(x_t - x_{t-1}) - \alpha \nabla f(x_t + \beta (x_t - x_{t-1}))
@@ -330,7 +330,7 @@ The convergence rate (upper bound on the sub-optimality) for different classes o
   \label{labt1}
 \end{table}
 
-Nesterov's Augmented Gradient in the case of smooth and strongly convex functions gives the acceleration that we had with Polyak's momentum for quadratic functions. This is great, because we get the guarantee for a more general class of functions. Recall that if $f$ is $\mu$-strongly convex and $\lambda$-smooth then $\kappa = \frac{\lambda}{\mu}$. Therefore, when $\lambda << \mu$ (i.e. some dimensions have very steep gradients), the acceleration becomes very significant.
+Nesterov's Augmented Gradient in the case of smooth and strongly convex functions gives the acceleration that we had with Polyak's momentum for quadratic functions. This is great because we get the guarantee for a more general class of functions. Recall that if $f$ is $\mu$-strongly convex and $\lambda$-smooth then $\kappa = \frac{\lambda}{\mu}$. Therefore, when $\lambda << \mu$ (i.e. some dimensions have very steep gradients), the acceleration becomes very significant.
 \newline
 
 \subsection{General scheme for the Convergence of Nesterov's Accelerated Gradient Descent}
@@ -365,7 +365,7 @@ therefore, in the limit as $k \to \infty$, $\phi_k$ becomes a lower bound of $f$
 \end{figure}
 
 
-Although the definition of estimate sequence sounds extremely artificial and lacking intuition, Nesterov showed that provided we manage to find such a sequence, then there is an automatic way to construct a sequence of iterates $\{x_k\}$ that successfully converges to the minimizer $x^\ast$ with rate of convergence given by the rate of convergence of the sequence of $\{\lambda_k\}$ to 0.\\
+Although the definition of estimate sequence sounds extremely artificial and lacking intuition, Nesterov showed that provided we manage to find such a sequence, then there is an automatic way to construct a sequence of iterates $\{x_k\}$ that successfully converges to the minimizer $x^\ast$ with the rate of convergence given by the rate of convergence of the sequence of $\{\lambda_k\}$ to 0.\\
 
 Let us start with formalizing the last claim:
 
@@ -503,7 +503,7 @@ Recall from the last lecture that the iteration step at time $t$ for Gradient De
 
 When training begins, the model weights $x$ are more than likely very far from the optimal value $x*= \min_{x}f(x)$, therefore, most of our data points $x_i$, agree on the direction of the gradient. (see the high bias region in Figure 6)\\
 
-However, when training goes on, most of the model weights are already close to the optimum, some are well tuned and others are not, this is where the variance has a significant impact on our convergence rate because almost all samples in our batch will produce gradients pointing in different directions, therefore, if we keep the same step size we will bounce around the optimum. This is called the noise ball effect.\\
+However, when training goes on, most of the model weights are already close to the optimum, some are well-tuned and others are not, this is where the variance has a significant impact on our convergence rate because almost all samples in our batch will produce gradients pointing in different directions, therefore if we keep the same step size we will bounce around the optimum. This is called the noise ball effect.\\
 
 To avoid bouncing around the minimum, we can use a decaying step size. The blue line in Figure 6 illustrates what happens when we reduce the variance by decaying the step size, another trick to reduce the variance would be to increase the batch size (in the limit we would get the same convergence rate as Gradient Descent).
 
@@ -517,7 +517,7 @@ To avoid bouncing around the minimum, we can use a decaying step size. The blue 
 \subsection{Convergence rate for convex-Lipschitz-bounded functions}\label{SGDbound}
 
 
-We provide here an upper bound on the suboptimality of the solution obtained with SGD with respect to the minimizer ${\bf w}^\ast$. Similar to the case of GD (see Theorem 1 from Lecture 2 of the course), we can show that SGD has convergence rate of the order of $\mathcal{O}(T^{-1/2})$ for convex, $L$-Lipschitz functions, where $T$ is the number of iterates. However, since SGD is a random algorithm, we can only give this result in ``expected" form. \\
+We provide here an upper bound on the suboptimality of the solution obtained with SGD with respect to the minimizer ${\bf w}^\ast$. Similar to the case of GD (see Theorem 1 from Lecture 2 of the course), we can show that SGD has the convergence rate of the order of $\mathcal{O}(T^{-1/2})$ for convex, $L$-Lipschitz functions, where $T$ is the number of iterates. However, since SGD is a random algorithm, we can only give this result in ``expected" form. \\
 
 
 Before stating the theorem, which will be valid for general non-differentiable, convex, Lipschitz function, we quickly recall the definition of the subgradient: the subgradient is a generalization of the gradient for non-differentiable functions. Similar to the gradient, a subgradient of a function $f$ at a point ${\bf x}$ is the slope of a tangent line that bounds the function $f$ at the point ${\bf x}$ from below. See \figurename \ \ref{subgrad}. \\
