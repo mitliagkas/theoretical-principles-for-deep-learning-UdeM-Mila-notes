@@ -107,6 +107,7 @@ Statistical learning theory: PAC-Bayes bounds}
 \maketitle
 \textbf{Scribes}\hfill
 \textbf{Instructor:} Ioannis Mitliagkas\\
+\textbf{Winter 2021:} Amirhossein Kazemnejad\\
 \textbf{Winter 2020:} Howard Huang\\
 \textbf{Winter 2019:} Zafarali Ahmed, Nadeem Ward\\
 \textbf{Winter 2018:} Jérémy Trudel, Lluís Castrejón
@@ -181,7 +182,7 @@ Our main result gave us a bound on the sample size:
 
 \begin{thm} For all $h \in \mathcal{H}$, If
 \[
-	n=\Omega\left(\frac{log(\frac{|\mathcal{H}|}{\delta})}{\epsilon^2}\right)
+	m=\Omega\left(\frac{log(\frac{|\mathcal{H}|}{\delta})}{\epsilon^2}\right)
 \]
 then with probability at least $1-\delta$:
 \[
@@ -214,9 +215,9 @@ $h_s$ is constructed based on the data $z \in S$. These same $z \in S$ are used 
 
 Simply put, \emph{Occam's bound} tells us to put a distribution over the countably infinite hypothesis class $\mathcal{H}$ that is independent of dataset $S$ we will receive (The PAC bound can be treated as Occam's bound with a uniform prior).
 This can be thought of as ``placing our bets" on the different hypotheses $h \in \mathcal{H}$ prior to seeing the actual data.
-We call this distribution the \textit{prior} $P$ on the hypothesis class $\mathcal{H}$. We will see that in doing so we will get bounds on the generalization gap that no longer depend on the size of the hypothesis class, $|\mathcal{H}|$. These bounds now become variable depending on how we weigh each individual hypothesis $h$, i.e. $P(h)$.
+We call this distribution the \textit{prior} $P$ on the hypothesis class $\mathcal{H}$\footnote{It is worth noting that $P$ only needs to be independent of the collected dataset $S$. e.g. one can use information about data generating distribution $D$ to design a prior.}. We will see that in doing so we will get bounds on the generalization gap that no longer depend on the size of the hypothesis class, $|\mathcal{H}|$. These bounds now become variable depending on how we weigh each individual hypothesis $h$, i.e. $P(h)$.
 
-This analysis will use the assumption that $\mathcal{H}$ is discrete (countable) in order to use the union bound. Also, we will assume that the loss function $l(h,z)$ is bounded in order to use Hoeffding's inequality. Without loss of generality assume it's bounded on the interval $[0,1]$.
+This analysis uses the assumption that $\mathcal{H}$ is discrete (countable) in order to use the union bound. Also, we assume that the loss function $l(h,z)$ is bounded in order to use Hoeffding's inequality. Without loss of generality assume it's bounded on the interval $[0,1]$.
 
 
 %Simply put, an \emph{Occam's bound} states that if two hypotheses explain the data equally well, the one that makes less assumptions is generally preferable. In this context, we'll use it to state that the generalization loss is near training loss when the number of bits needed to write the rule is small compared to the sample size \cite{pac-bayes}. For the assumption to hold true, we consider that
@@ -235,7 +236,7 @@ This analysis will use the assumption that $\mathcal{H}$ is discrete (countable)
 %\end{defn}
 
 \begin{thm} (\citet{pac-bayes})
-Given a prior distribution P on $\mathcal{H}$, \(\sum_{\forall h} P(h)=1\), with probability at least \(\geq 1-\delta\) over $S \sim \mathcal{D}^n$ we have that the following holds true for all h $\in \mathcal{H}$:
+Given a prior distribution P on $\mathcal{H}$, \(\sum_{\forall h} P(h)=1\), with probability at least \(\geq 1-\delta\) over $S \sim \mathcal{D}^n$, we have that the following holds simultaneously for all h $\in \mathcal{H}$:
 
 \[
  R[h]\leq \hat{R}_S[h]+\sqrt[]{\frac{\log\frac{1}{P(h)}+\log\frac{2}{\delta}}{2n}}
@@ -263,9 +264,9 @@ We used the union of all the hypothesis $h$ to  bound our hypothesis of interest
 What this tells us is that with probability at least $1-\delta$ we have: $$|\hat{R}_s[h_S]-R[h_S]| \leq \sqrt[]{\frac{\log\frac{1}{P(h_s)}+\log\frac{2}{\delta}}{2n}}$$
 \end{proof}
 
-Notice that this bound is no longer dependent on $|\mathcal{H}|$ and instead has the term $\log \frac{1}{P(h)}$. If our prior distribution gives more probability to $h$ than this term will decrease therefore giving a tighter bound and vise versa. If, however, we don't give any probability to a hypothesis $h$ (i.e $P(h) = 0$) then $\log \frac{1}{P(h)}$ will be undefined which provides a vacuous bound.
+Notice that this bound is no longer dependent on $|\mathcal{H}|$ and instead has the term $\log \frac{1}{P(h)}$. If our prior distribution gives more probability to $h$ than this term will decrease therefore giving a tighter bound and vise versa. If, however, we don't give any probability to a hypothesis $h$ (i.e $P(h) = 0$) then $\log \frac{1}{P(h)}$ will be undefined which provides a vacuous bound. Therefore, having a tight generalization bound can be reduced to carefully designing a prior distribution that corresponds to the learning algorithm and learned hypothesis $h_S$. The following example sheds light on designing a prior would look like:
 
-\vspace*{0.5cm}
+% \vspace*{0.5cm}
 \begin{figure}[H]
     \captionsetup{justification=centering}
 	%\includegraphics[scale=0.9,center]{schema.png}
@@ -316,15 +317,21 @@ Notice that this bound is no longer dependent on $|\mathcal{H}|$ and instead has
         }
         \draw[black!100] plot [smooth] coordinates {(p1) (p2) (p3) (p4) (p5) (p6) (p7) (p8) (p9) (p10) (p11) (p12) (p13) (p14) (p15) (p16) (p17) (p18) (p19) (p20)};
     \end{tikzpicture}
-    \caption{When an $\ell_2$ regularization term is added to the learning algorithm, it adds concavity to the loss function, leading to a higher likelihood of choosing a set of weights near the origin. In such a situation, using a prior which places heavier ``bets'' near the origin makes sense. This figure is a visual representation of what this loss function looks like after the addition of a regularization term.}
+    \caption{The effect of adding an $\ell_2$ regularizer to a loss function.}
+    \label{fig:l2_reg}
 \end{figure}
 
 \vspace*{0.5cm}
 \begin{figure}[H]
     \captionsetup{justification=centering}
 	\includegraphics[scale=0.9,center]{circle.png}
-    \caption{ \textbf{Example:} Consider a simple linear classifier with 2 weights $\Vec{w} = (w_1, w_2)$, which are stored using a 32 bit floats. This implies that the hypothesis class is finite with $|H|=2^{32 \times 2}$. Consider also that the loss function is bounded and has a \emph{regularization} term of the form $\lambda||\Vec{w}||$. The regularization term forces the weights to be as small as possible and corresponds to a prior $P$ with higher probability assigned to $\Vec{w}$ near the origin. In doing so we will get tight theoretical bounds for desirable hypotheses. Notice that this says nothing about the algorithm itself, we are just affecting how good our bounds are.}
+    \caption{A prior that assigns higher probability to $\Vec{w}$ near the origin}
+    \label{fig:circle}
 \end{figure}
+\vspace*{0.5cm}
+
+\textbf{Example:} When an $\ell_2$ regularization term is added to the learning algorithm, it adds convexity to the loss function, leading to a higher likelihood of choosing a set of weights near the origin (Figure \ref{fig:l2_reg}). In such a situation, using a prior which places heavier ``bets'' near the origin makes sense. Consider a simple linear classifier with 2 weights $\Vec{w} = (w_1, w_2)$, which are stored using a 32 bit floats. This implies that the hypothesis class is finite with $|H|=2^{32 \times 2}$. Consider also that the loss function is bounded and has a \emph{regularization} term of the form $\lambda||\Vec{w}||$. The regularization term forces the weights to be as small as possible and corresponds to a prior $P$ with higher probability assigned to $\Vec{w}$ near the origin (Figure \ref{fig:circle}). In doing so we will get tight theoretical bounds for desirable hypotheses. Notice that this says nothing about the algorithm itself, we are just affecting how good our bounds are.
+
 
 \section{PAC Bayes}
 In PAC Bayes the basic idea is that we add a ``posterior'' $Q$ on $\mathcal{H}$, in addition to the prior $P$ we already had in the Occam's Bound. The basic recipe we follow is:
@@ -360,16 +367,16 @@ Recall the Markov inequality states that $P(X\geq a) \leq \frac{\mathbb{E}(X)}{a
 \mathbb{P}_S(f(S)\geq \epsilon) = \mathbb{P}_S(e^{f(S)} \geq e^\epsilon) \leq \frac{\mathbb{E}_S[e^{f(s)}]}{e^\epsilon}
 \label{eqn:markov}
 \end{equation}
-Let $\Delta(h) = \mathbb{E}_{h\sim Q}[R[h]] - \mathbb{E}_{h\sim Q}[\hat R_S[h]]$.
+Let $\Delta(h) = R[h] - \hat R_S[h]$.
 We will apply equation (\ref{eqn:markov}) with the function
-\[f(S) = \sup_Q \left(2(n-1)\mathbb{E}_{h\sim Q}(\Delta(h))^2 - D(Q||P)\right)\]
+\[f(S) = \sup_Q \left(2(n-1)\mathbb{E}_{h\sim Q}(\Delta(h)^2) - D(Q||P)\right)\]
 We now bound $\mathbb{E}_S[e^{f(S)}]$.
 \begin{align*}
 2(n-1)\mathbb{E}_{h\sim Q}(\Delta(h))^2 - D(Q||P)
 &= \mathbb{E}_{h\sim Q} \left[\log(e^{2(n-1)\Delta(h)^2}P(h)/Q(h))\right]\\
 \intertext{Apply Jensen's inequality, which tells us that $\mathbb{E}[\log(\cdot)]\leq \log\mathbb{E}(\cdot)$}
 &\leq \log\mathbb{E}_{h\sim Q} \left[e^{2(n-1)\Delta(h)^2}P(h)/Q(h)\right]\\
-\intertext{Use a ``twist of measures'' trick: $\mathbb{E}_{h\sim Q}[(\cdots) P(h)/Q(h)] = \sum_{h\in Q} Q(h)[(\cdots) P(h)/Q(h)] = \sum_{h\in Q}[(\cdots) P(h)] = \sum_{h\in P}[(\cdots) P(h)] = \mathbb{E}_{h\in P}[\cdots]$. }
+\intertext{Use a ``twist of measures'' trick: $\mathbb{E}_{h\sim Q}[(\cdots) P(h)/Q(h)] = \sum_{h\in \mathcal{H}} Q(h)[(\cdots) P(h)/Q(h)] = \sum_{h\in \mathcal{H}}[(\cdots) P(h)] = \sum_{h\in \mathcal{H}}[(\cdots) P(h)] = \mathbb{E}_{h\sim P}[\cdots]$. }
 &= \log\mathbb{E}_{h\sim P} \left[e^{2(n-1)\Delta(h)^2}\right]
 \end{align*}
 Therefore
@@ -401,6 +408,7 @@ Here are some examples of posteriors:
     % \item Let $Q=\mathcal{N}(h_S, I)$, that is \textcolor{red}{some interpretation about what this represents. since it has the same expectation as the 1st entry} $KL(Q||P)$ is finite and therefore, we can find bounds for $R_S[h]$. For example, if $R_s[h]$ is convex around $h$, Jensen's inequality will give $R[h]\leq \mathbb{E}_{h\sim Q}[R[h]]$.
 \end{enumerate}
 
+One complication with PAC-Bayes bound is that it doesn't give us a generalization guarantee for a particular hypothesis $h$. Instead, it gives an upper bound over draws from distribution $Q$. In other words, if we randomly sample a hypothesis from distribution $Q$, \emph{in expectation}, the generalization gap is going to be bounded by the aforementioned term (\ref{pacbayesbound}).
 
 \vspace{0.5cm}
 \bibliography{Refs/lec8}
