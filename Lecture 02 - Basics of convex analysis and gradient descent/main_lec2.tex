@@ -131,6 +131,7 @@ Basics of convex analysis and gradient descent }
 
 \textbf{Scribes}\hfill
 \textbf{Instructor:}  Ioannis Mitliagkas\\
+\textbf{Winter 2021:} Magid Sabbagh\\
 \textbf{Winter 2020:} Joss Rakotobe\\
 \textbf{Winter 2019:} Andrew Williams, Ankit Vani, Maximilien Le Clei\\
 \textbf{Winter 2018:} Assya Trofimov, Mohammad Pezeshki, Reyhane Askari
@@ -337,7 +338,29 @@ Figure~\ref{fig:sets} gives examples of a convex set and a non-convex set.
     \caption{Examples of a convex and a non-convex set. \textbf{Left:} Convex set, \textbf{Right:} Non-convex set.}
     \label{fig:sets}
 \end{figure}
+The following example relates linear maps in a finite dimensional euclidean space to convexity. 
+\begin{eg}
+A subset $C$ of $\mathbb{R}^n$ is called convex iff for all $x,y \in C, \lambda \in [0,1]$, $\lambda x+(1-\lambda)y \in C$.
 
+Let $A \in \mathbb{R}^{n \times m}$, $b \in \mathbb{R}^m$, $C$ a convex subset of $\mathbb{R}^n$ and $D$ a convex subset of $\mathbb{R}^m$, then
+\begin{itemize}
+\item[a)] The set $A^{-1}(D):=\left\{x \in \mathbb{R}^n : Ax \in D \right\}$ is a convex subset of $\mathbb{R}^n$.
+\item[b)] The set $A(C):=\left\{Ax : x \in C \right\}$ is a convex subset of $\mathbb{R}^m$.
+\end{itemize}
+\end{eg}
+\begin{proof}
+\begin{itemize}
+\item[a)] Let $x_1,x_2 \in A^{-1}(D)$ and let $\lambda \in [0,1]$. Then $Ax_1,Ax_2 \in D$, and since $D$ is convex, $\lambda Ax_1+(1-\lambda)Ax_2 \in D$ and hence $A\left\{\lambda x_1+\left(1-\lambda\right)x_2\right\} \in D$ so $\lambda x_1+(1-\lambda)x_2 \in A^{-1}(D)$.
+\item[b)] Let $y_1,y_2 \in A(C)$ and let $\lambda \in [0,1]$. Then, there exists $x_1,x_2 \in C$ such that $y_1=Ax_1$ and $y_2=Ax_2$. $\lambda y_1+(1-\lambda)y_2=A(\lambda x_1+(1-\lambda)x_2) \in A(C)$, since $\lambda x_1+(1-\lambda)x_2 \in C$ ($C$ convex).
+\end{itemize}
+\end{proof}
+The following example shows that convexity of sets is preserved under arbitrary intersections.
+\begin{eg}
+Let $I$ be an index set and let $\left\{C_i \right\}_{i \in I}$ be a family of convex subsets of $\mathbb{R}^n$. Then, the set $\cap\limits_{i \in I} C_i$ is a convex subset of $\mathbb{R}^n$.
+\end{eg}
+\begin{proof}
+Let $x_1,x_2 \in \cap\limits_{i \in I} C_i$ and $\lambda \in [0,1]$. Then, for all $i \in I$, $x_1,x_2 \in C_i$, and hence $\lambda x_1+(1-\lambda)x_2 \in C_i$ (since $C_i$ is convex) and hence $\lambda x_1 +(1-\lambda)x_2 \in \cap\limits_{i \in I} C_i$. Therefore, $\cap\limits_{i \in I} C_i$ is a convex subset of $\mathbb{R}^n$.
+\end{proof}
 \subsubsection{Convex functions}
 \label{subsubsec:convexAnalysis:background:convexSets}
 Armed with the definition of convex sets, we can finally define convex functions.
@@ -593,8 +616,42 @@ Since this is for all $\vv \in \R^d, \vx+t\vv \in \dom(f)$, by taking $t=0$, we 
 In general, for any non-negative eigenvalue of the Hessian, the curvature of the function is non-negative along the corresponding eigenvector, and thus the function is convex in that direction. 
 On the other hand, a non-positive eigenvalue represents non-positive curvature along the eigenvector, and the function is concave in that direction. 
 Then, we can see that for a function to be convex, it has to have non-negative curvature, and thus non-negative eigenvalues, in all directions.
+\subsection{Quadratic Functions and Convexity}
+As an illustrative example, we look at the results about convexity for a quadratic function in a $\mathbb{R}^n$.\\
+Let $A \in \mathbb{R}^{n \times n}$ be a symmetric positive semi-definite matrix, $b \in \mathbb{R}^n$ and $c \in \mathbb{R}$. Let $f:\mathbb{R}^n \mapsto \mathbb{R}$ be given for all $x \in \mathbb{R}^n$ by $f(x)=\frac{1}{2}x^TAx+b^Tx+c.$
+\begin{thm}
 
+The following hold:
+\begin{itemize}
+\item[a)] $f$ is convex if and only if $A$ is positive semi-definite.
+\item[b)] $f$ admits a minimiser if and only if $f$ is convex and $b \in \text{range}(A)$.
+\end{itemize}
+\end{thm}
+\begin{proof}
+\begin{itemize}
+\item[a)]
+Note that $f$ is twice differentiable on $\mathbb{R}^n$ and $\nabla f(x)=Ax+b$, $\nabla^2f(x)=A$. Hence $f$ is convex if and only if $A$ is positive semi-definite.
+\item[b)]
+Assume that $A$ is positive semi definite ($f$ is convex) and that $b \in \text{range}(A)$. Hence $-b \in \text{range}(A)$ and there exists $x_0 \in \mathbb{R}^n$ such that $Ax_0=-b$. We prove from first principles that $f(x) \geq f(x_0)$ for all $x \in \mathbb{R}^n$. \\
+$f(x_0)=\frac{1}{2}x_0^t Ax_0+b^tx_0+c=\frac{-1}{2}x_0^tb+b^tx_0+c=\frac{1}{2}b^tx_0+c$. \\
+ We have for all $x \in \mathbb{R}^n$,
+\begin{align*}
+0 \leq (x-x_0)^tA(x-x_0)&=(x-x_0)^tAx-(x-x_0)^tAx_0  \quad \quad  \text{$A$ is positive semidefinite}\\  
+&=x^tAx-x_0^tAx-x^tAx_0+x_0^tAx_0 \\
+&=x^tAx-(Ax_0)^tx+x^tb-x_0^tb \quad \quad \text{$A$ is symmmetric}\\
+&=x^tAx+b^tx+b^tx-x_0^tb\\
+&=2\left\{f(x)-f(x_0)\right\}
+\end{align*}
+Hence, $f(x) \ge f(x_0)$ for all $x \in \mathbb{R}^{n}$ and so $x_0 \in \text{argmin}\limits_{x \in \mathbb{R}^n} f(x)$, which is hence not empty.\\
 
+We now prove the direction  of the equivalence.\\ But first, we recall from linear algebra the following statement : since $A$ is symmetric, $\text{ker}(A)=\left\{\text{range}(A)\right\}^\perp$.\\
+
+Assume that $f$ admits a minimizer. We will show that $A$ is positive semi-definite  (equivalently $f$ is convex) and that $b \in \text{range}(A)$.
+Assume that $f$ admits a minimizer. Therefore,$\inf\limits_{x \in \mathbb{R}^n} f(x) > - \infty$. Let us suppose that the symmetric matrix $A$ is not positive semi definite. Then, there exists an eigenvalue $ \lambda < 0$ of $A$. Let $v$ (non zero) be an eigenvector corresponding to $\lambda$. Consider the function $\mathbb{R} \mapsto \mathbb{R}, z \mapsto f(zv)={\lambda \Vert v \Vert ^2 z^2}/{2} +zb^tv$. Since $ \lambda v^tv <0$, we have that $f(zv) \to -\infty$ as $z \to \infty$, contradicting the assumption that $f$ has minimizer. Hence $A$ must be positive semidefinite.\\
+Let $b=\alpha+ \beta$ where $\alpha \in \text{ker A}$ and $\beta \in \text{range}(A)$.\\
+$f(\alpha)=b^t \alpha=\alpha^t \alpha+ \beta^t \alpha=\alpha^t \alpha$. Consider the function $\mathbb{R} \mapsto \mathbb{R}$, $z \mapsto f(z \alpha)=z \alpha^t \alpha$. If $\alpha$ is non zero, $f(z \alpha) \to -\infty$ as $z \to -\infty$, contradicting the fact that  $\inf\limits_{x \in \mathbb{R}^n} f(x) > - \infty$, so we must have $\alpha=0$ and hence $b=\beta \in \text{range}(A)$.
+\end{itemize}
+\end{proof}
 \subsection{Gradient descent}
 
 We will now study our first optimization method.

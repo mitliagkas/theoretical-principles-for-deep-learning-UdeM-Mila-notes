@@ -93,7 +93,7 @@ Please report any bugs to the scribes or instructor.
 \textbf{Scribes:}
 \hfill
 \textbf{Instructor:} Ioannis Mitliagkas
-
+\textbf{Winter 2021:} Magid Sabbagh
 \textbf{Winter 2020:} Etienne Thuillier
 
 \textbf{Winter 2019:} Ian Porada, Th\'eo Moins, William Starnaud 
@@ -1398,7 +1398,14 @@ It turns out that $P$ has two distinct real roots:
         \sqrt{\kappa} + 1
     }
 \end{align*}
-We chose $r_2$ and used the results above.
-Note that in our solution, we did not have contributions from $r_1$ because $r_1 > 1$ and thus, leads to a lower bound that explodes.
+
+Therefore, for all $k \geq 1$, we have that $x^\star(k)=a r_1^k+br_2^k$, for some real constants $a,b \in \mathbb{R}$. Since $\displaystyle{\sum\limits_{i=1}^\infty x^\star(k)^2 < \infty}$ $0<r_2<r_1<1$ and $r_1r_2=1$ then we must have $a=0$ . Hence, for all $k \geq 1$, $x^\star(k)= b r_2^k$. (To see this quickly, $x^\star(k)=ar_1^k+br_2^k$, so $\left\{x^\star(k)\right\}^2=a^2r_1^{2k}+b^2r_2^{2k}+2abr_1^kr_2^k=a^2r_1^{2k}+b^2r_2^{2k}+2ab)$.\\
+Using the fact that 
+$\displaystyle{1-2 \frac{\kappa+1}{\kappa-1}x^\star(1)+x^\star(2)=0}$,
+$\displaystyle{1-2 b\frac{\kappa+1}{\kappa-1}\frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}+b\left\{\frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}\right\}^2=0}$\\
+$\displaystyle{1-b\frac{2\kappa+2}{(\sqrt{\kappa}+1)^2}+b\frac{(\sqrt{\kappa}-1)^2}{(\sqrt{\kappa}+1)^2}=0}$. This implies that $b=1$. Therefore 
+$$
+x^\star(k)=\left\{\frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}\right\}^k
+$$
 Since our black box approach optimizes the objective so that $f(\vx^{(t)})$ approaches to $f(\vx^{\ast})$, thereby decreasing the gap, we will not have an exploding lower bound.
 \end{document}

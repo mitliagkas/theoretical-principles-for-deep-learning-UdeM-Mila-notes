@@ -85,6 +85,7 @@ Please report any bugs to the scribes or instructor.
 
 \textbf{Scribes}\hfill
 \textbf{Instructor:}  Ioannis Mitliagkas\\
+\textnf{Winter 2021:} Magid Sabbagh\\
 \textbf{Winter 2020:} Etienne Thuillier\\
 \textbf{Winter 2019:} Veronica Chelu, Andre Cianflone\\
 \textbf{Winter 2018:} Aldo Lamarre, Breandan Considine
@@ -475,7 +476,102 @@ from which the value of the optimal rate of convergence $\rho$ can be derived as
 \end{equation}
 where $\kappa$ denotes the condition number $\kappa=\frac{h_{\max}}{h_{\min}}$, and $\mu$ is the momentum coefficient
 \end{lemma}
+\subsection{Generalization to Higher Dimensions}
+It is interesting to examine the generalization of the form of the Polyak momentum method for general convex quadratic loss, in dimension $n$.
+et $A \in \mathbb{R}^{n \times n}$ be symmetric positive definite, $b \in \mathbb{R}^n$ and $c \in \mathbb{R}$ and let $f: \mathbb{R}^n \mapsto \mathbb{R}$ be the function given for all $x \in \mathbb{R}^n$ by $f(x)=\frac{1}{2}x^TAx+b^Tx+c$. It easy to see that $f$ is strictly convex and has a unique minimizer $x^\star=-A^{-1}b$.\\ 
+We apply Polyak's momentum to $f$, in order to generalize the linear operator present in the first section. We also provide a formula to compute its characteristic polynomial.
+$$
+x_{k+1}=x_{k}-\gamma \nabla f(x_k)+\mu(x_{k}-x_{k-1})=x_{k}- \gamma A(x_k-x_\star)+\mu(x_k-x_\star)-\mu(x_{k-1}-x_\star).
+$$
+\\
+Hence
 
+$$
+x_{k+1}-x_\star=x_k-x_\star-\gamma A(x_k-x_\star)+\mu(x_k-x_\star)-\mu(x_{k-1}-x_\star)=((1+\mu)I_n-\gamma A)(x_k-x_\star)-\mu(x_{k-1}-x_\star)
+$$
+
+$$
+\begin{bmatrix}
+x_{k+1}-x_\star \\
+x_{k}-x_\star
+\end{bmatrix}
+=\begin{bmatrix}
+(1+\mu)I_n-\gamma A & -\mu I_n \\
+I_n & 0_{n \times n}
+\end{bmatrix}
+\begin{bmatrix}
+x_k-x_\star \\
+x_{k-1}-x_\star
+\end{bmatrix}
+$$
+Now, since $A$ is real symmetric with eigenvalues $\mu$  and $L$, we can find an orthogonal $n \times n$ matrix $P$ and a diagonal $n \times n$ matrix $D$ such that $A=PDP^T$. Then, $(1+\mu)I_n-\gamma A=P(1+\mu)I_nP^T-\gamma PDP^T=P((1+\mu)I-\gamma D)P^T$. Hence
+$$
+\underbrace{\begin{bmatrix}
+(1+\mu)I_n-\gamma A & -\mu I_n \\
+I_n & 0_{n \times n}
+\end{bmatrix}}_{\text{Call it} \mathbf{A}}
+=\begin{bmatrix}
+P & 0_{n \times n}\\
+0_{n \times n} & P
+\end{bmatrix}
+\underbrace{
+\begin{bmatrix}
+(1+\mu)I-\gamma D& -\mu I_n \\
+I_n & 0_{n \times n}
+\end{bmatrix}}_{\text{Call it } \mathbf{D}}
+\begin{bmatrix}
+P^T & 0_{n \times n}\\
+0_{n \times n} & P^T
+\end{bmatrix}
+$$
+And 
+$$
+\begin{bmatrix}
+P & 0_{n \times n}\\
+0_{n \times n} & P
+\end{bmatrix}
+\begin{bmatrix}
+P^T & 0_{n \times n}\\
+0_{n \times n} & P^T\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+I_n & 0_{n \times n}\\
+0_{n \times n} & I_n\\
+\end{bmatrix}
+=I_{2n}
+$$
+Since $\mathbf{A}$ and $\mathbf{D}$ are conjugate by an orthogonal matrix, then they share the same eigenvalues and the same matrix $2-$norm. We compute that characteristic polynomial of $\mathbf{D}$. Note that in this case the block formula works, since the blocks in the last row commute.
+$$
+\det(xI_{2n}-\mathbf{D})=\det \begin{bmatrix}
+(x-1-\mu)I+\gamma D& \mu I_n \\
+-I_n & xI_{n \times n}
+\end{bmatrix}
+=\det(x(x-1-\mu)I_{n}+\gamma D+\mu I_{n})=\prod\limits_{i=1}^n \left\{x^2-(1+\mu-\gamma D_{ii})x+\mu\right\}.
+$$
+Let $\epsilon>0$ and choose $N \in \mathbb{N}$ be such that for all $k \geq N$, we have that $\Vert A^k \Ver^k$. Then
+
+$
+\Vert \begin{bmatrix}
+x_{k+1}-x_\star \\
+x_{k}-x_\star
+\end{bmatrix}
+\Vert
+=\Vert \mathbf{A}^k \Vert
+\Vert \begin{bmatrix}
+x_{1}-x_\star \\
+x_{0}-x_\star
+\end{bmatrix}
+\Vert \le (\rho(\mathbf{A}) +\epsilon_k)^k \Vert \begin{bmatrix}
+x_{1}-x_\star \\
+x_{0}-x_\star
+\end{bmatrix}
+\Vert \le (\rho(\mathbf{A})+\epsilon_k)^k \Vert \begin{bmatrix}
+x_{1}-x_\star \\
+x_{0}-x_\star
+\end{bmatrix}
+\Vert  
+$\\
 \pagebreak
 
 \appendix
