@@ -90,8 +90,10 @@ Please report any bugs to the scribes or instructor.
 
 \textbf{Scribes}\hfill
 \textbf{Instructor:}  Ioannis Mitliagkas\\
-\textbf{Winter 2019:} Eugene Vorontsov \& Charles Guille-Escuret\\
+\textbf{Winter 2021:} Abderrahim Fathan, Hong-Hai Phan-Vu\\
 \textbf{Winter 2020:} Emre Onur Kahya\\
+\textbf{Winter 2019:} Eugene Vorontsov \& Charles Guille-Escuret\\
+
 
 
 %----------------------------------------
@@ -136,7 +138,7 @@ Please report any bugs to the scribes or instructor.
 
 \section{Basic definitions and assumptions}
 
-In this lecture, we consider state transitions and subsequent rewards induced by actions to have a Markov property: given an action in a state, the reward and the new state are independent of other states and actions. We assume the agent can be found in a finite set of states $\mathcal{S}$ with access to a set of actions $\mathcal{A}$. Furthermore, we assume that rewards are bounded:
+In this lecture, we consider state transitions and subsequent rewards induced by actions to have a Markov property: the reward and the resulting state depend only on the current state and the action performed. We assume the agent can be found in a finite set of states $\mathcal{S}$ with access to a set of actions $\mathcal{A}$. Furthermore, we assume that rewards are bounded:
 $\exists M\in \mathbb{R}$ such that $\forall s,s'\in \mathcal{S}, \forall a\in \mathcal{A},\forall r > M, P(r,s'|s,a)=0$.
 
 \begin{defn}[Markov Decision Process]
@@ -160,7 +162,9 @@ Observe some y from $s$:\[
 y\sim P(y|s)
 \]
 \end{defn}
-\textit{Observation :} To work with an POMDP we can convert it to an MDP by assembling states from cumulative partial observations: $\tilde s_{0}=\{y_{0}\}$, $\tilde s_{1}=\{y_{0},y_{1}\}$, $\tilde s_{2}=\{y_{0},y_{1},y_{2}\}$, etc... \\
+In this case, the agent only has access to the history of rewards, observations and previous actions when making a decision.
+
+\textit{Observation :} To work with an POMDP we can convert it to an MDP by assembling states from cumulative partial observations (\textit{belief state}): $\tilde s_{0}=\{y_{0}\}$, $\tilde s_{1}=\{y_{0},y_{1}\}$, $\tilde s_{2}=\{y_{0},y_{1},y_{2}\}$, etc. \\
 
 \begin{figure}
     \centering
@@ -258,9 +262,9 @@ Since for any $i$, $r_{i}$ is independent of $\pi_{i+1},\pi_{i+2},...,\pi_{T-1}$
 \[
 V(s_{0}) = \max_{\pi_{0}}\mathbb{E}[r_{0}+\max_{\pi_{1}}\mathbb{E}[r_{1}+...+\max_{\pi_{T-1}}\mathbb{E}[r_{T-1}+V_{T}(s_{T})]]]
 \]
-Here notice that each one of these expectations is an expectation for a specific randomness. As an example the above series the last $r_{T-1}$ is a random variable and it is the reward that we get for the state that we end up in after the action dictated by policy $\pi_{T-1}$. Therefore this expectation is with respect to randomness only that will appear starting at step $T-1$ in future. So the first expectation $\max_{\pi_{0}}\mathbb{E}[r_{0}+ ... $ is with respect to all randomness for the problem. Using Fubini–Tonelli theorem we were able to move the integrals that appear in multiple expectations. To be able to do that we assumed a regularity condition, i.e. our random variable rewards live in a compact space. 
+Here notice that each one of these expectations is an expectation for a specific randomness. As an example, from the above series, the last $r_{T-1}$ is a random variable and it is the reward that we get for the state that we end up in after the action dictated by policy $\pi_{T-1}$. Therefore this expectation is with respect to randomness only that will appear starting at step $T-1$ in future. So the first expectation $\max_{\pi_{0}}\mathbb{E}[r_{0}+ ... $ is with respect to all randomness for the problem. Using Fubini–Tonelli theorem we were able to move the integrals that appear in multiple expectations. To be able to do that we assumed a regularity condition, i.e. our random variable rewards live in a compact space.
 
-We can then solve by applying for $i$ following $\left\{T,...,1\right\}$:
+We can then solve by applying for $i$ following $\left\{T,\ldots,1\right\}$:
 
 \begin{align*}
 &\forall s\in\mathcal{S} \\
@@ -280,14 +284,14 @@ We can then solve by applying for $i$ following $\left\{T,...,1\right\}$:
 \end{algorithm}
 
 \subsection{Infinite Horizon}
-For some games we do not have a predetermined end time and the game can keep going forever. Therefore finite horizon algorithms do not apply to these cases. Also in real life problems one usually has the following situation: it is better to find a good solution soon then to find a great solution much later. For these two reasons one would need to have the case of an infinite horizon where future rewards are increasingly discounted (reward is bounded).
+For some games, we do not have a predetermined end time and the game can keep going forever. Therefore finite horizon algorithms do not apply to these cases. Also in real-life problems one usually has the following situation: it is better to find a good solution soon than to find a great solution much later. For these two reasons, one would need to have the case of an infinite horizon where future rewards are increasingly discounted (reward is bounded).
 
 \begin{defn}[State Value Function]
 \[
 V^\pi_t(s) = \mathbb{E} \left[ \sum_{\tau=0}^{t}\gamma^\tau r_\tau|s_0=s \right]
 \]
 \end{defn}
-Here the $\gamma$ is called the discount factor and its value ($0<\gamma<1$) determines how much we care about future rewards. 
+Here the $\gamma$ is called the \textit{discount factor} and its value ($0<\gamma<1$) determines how much we care about future rewards. 
 \begin{defn}[State-Action Value Function]
 \[
 Q^\pi_t(s,a) = \mathbb{E} \left[ \sum_{\tau=0}^{t}\gamma^\tau r_\tau|s_0=s,a_0=a \right]
@@ -329,7 +333,7 @@ Initialize $V^{(0)}$ arbitrarily$\;$
  \caption{Infinite Horizon Value Iteration}
  \label{alg:infinite_horizon_VI}
 \end{algorithm}
-There is a fundamental difference between infinite horizon and the finite horizon cases. When we have the finite horizon version of the problem we impose the boundary conditions. Then it makes a big difference if we are near the beginning of the game or end of the game. Therefore our optimal policy changes from each time step. But for the infinite horizon version of the problem, there is no end point and no sense of absolute time. Hence an optimal policy is always optimal no matter how far we are in the game. 
+There is a fundamental difference between the infinite horizon and the finite horizon cases. When we have the finite horizon version of the problem we impose the boundary conditions. Then it makes a big difference if we are near the beginning of the game or the end of the game. Therefore our optimal policy changes from each time step. But for the infinite horizon version of the problem, there is no endpoint and no sense of absolute time. Hence an optimal policy is always optimal no matter how far we are in the game.
 
 \begin{thm}
 By assuming a horizon $T \in \mathbb{N}$, an infinite horizon value iteration problem can be converted into a finite horizon one with error bounded by:
@@ -365,7 +369,7 @@ Backup operator $\mathcal{T}$ is a contraction with modulus $\gamma$ under $\inf
 \]
 \label{thm:back_op}
 \end{thm}
-Finally we can show that repeated application of the operator $T$ will always converge state value function.  
+Finally we can show that repeated applications of the operator $T$ will always converge state value function.  
 \begin{thm}
 The backup operator $\mathcal{T}$ has a fixed point $V^{*}$ and :
 \[
@@ -417,22 +421,22 @@ Initialize $\pi^{(0)}$ arbitrarily$\;$
 
 Note that for a finite MDP, Algorithm~\ref{alg:policy_iteration} should converge in a finite number of iterations since the number of policies is finite~\cite{sutton2011reinforcement}.
 %\textit{Proof :} TODO
-The optimization of the expected reward can be seen as solving the bellman's equation for an utility function V, that is described below. We have that for an infinite-horizon decision problem, the value function $V(s_0)$ reaches equilibrium when the Bellman's equation is satisfied.  
+The optimization of the expected reward can be seen as solving the bellman's equation for a utility function V, that is described below. We have that for an infinite-horizon decision problem, the value function $V(s_0)$ reaches equilibrium when the Bellman's equation is satisfied.  
 \begin{defn}[Bellman's equation] 
 \[
-V(s_0) = \max_{{a}_{t=0}^{\infty}}{\sum_{t=0}^{\infty}\gamma^t F(s_t, a_t)}
+V(s_0) = \max_{\{a\}_{t=0}^{\infty}}{\sum_{t=0}^{\infty}\gamma^t F(s_t, a_t)}
 \]
 Where $F(a_t, s_t)$ defines the expected reward of a state-action pair, submitted to constraints $s_{t+1} \sim \pi(s_t,a_t)$ and discount factor $0<\gamma<1$.
 \end{defn}
 
-Note that V is a function of the optimal sequence of actions ${a}_{t=0}^{\infty}$ \textbf{as well as} the optimal/maximal value of the reward allowed by the environment. We will see that this is equivalent to solving a function with a singular fixed point. Additionally, this equation is an algorithm in itself to compute the reward and can be easily translated into code. 
+Note that V is a function of the optimal sequence of actions $\{a\}_{t=0}^{\infty}$ \textbf{as well as} the optimal/maximal value of the reward allowed by the environment. We will see that this is equivalent to solving a function with a singular fixed point. Additionally, this equation is an algorithm in itself to compute the reward and can be easily translated into code. 
 \newline
 \newline
 In the next sections, we will analyze what happens when the whole distribution of rewards is considered rather than just the expected reward, a setting called distributional RL.
 
 
 \section{Banach Fixed Point Theorem}
-In this section we discuss a central theorem in the analysis of RL algorithms: the Banach fixed point theorem\footnote{The derivations and proofs are mostly taken from \citet{wikipedia}}.
+In this section, we discuss a central theorem in the analysis of RL algorithms: the Banach fixed point theorem\footnote{The derivations and proofs are mostly taken from \citet{wikipedia}}.
 
 The Banach fixed point theorem gives convergence guarantees to a unique fixed point under iterated contraction mappings. Thus, if the update equation of an RL algorithm can be shown to be a contraction mapping, it will eventually converge. Moreover, regardless of initial values, convergence leads to the same fixed point (per uniqueness).
 
@@ -487,7 +491,7 @@ Thus, $\{x_n\}$ is a Cauchy sequence with a limit $x^* \in X$, and it is a fixed
     &= T(\lim_{n\to\infty} x_{n-1}) &\text{Valid because $T$ is continuous}\\
     &= T(x^*)
 \end{align*}
-Finally, it can be shown by contradiction that the fixed point is unique. Suppose there exists $p_1, p_2 \in X$ such that $p_1 \ne p_2$ and $p_1$ and $p_2$ are fixed points of $T$. Then
+Finally, it can be shown by contradiction that the fixed point is unique. Suppose there exists $p_1, p_2 \in X$ such that $p_1 \ne p_2$ and $p_1$ and $p_2$ are fixed points of $T$. Then:
 
 \begin{align*}
 d(T(p_1), T(p_2)) &= d(p_1, p_2) \leq qd(p_1, p_2)\\
@@ -499,11 +503,11 @@ Since $d(p_1, p_2) \geq 0$ by definition, this implies $d(p_1, p_2) = 0 \implies
 \end{proof}
 
 
-Theorem \ref{thm:banach} tells us that given any point $x_0 \in X$, repeated application of the contraction mapping not only leads to convergence, but also converges to the unique fixed point $x^* \in X$. This will be used in the next section to demonstrate convergence of distributional RL.
+Theorem \ref{thm:banach} tells us that given any point $x_0 \in X$, repeated applications of the contraction mapping not only leads to convergence, but also converges to the unique fixed point $x^* \in X$. This will be used in the next section to demonstrate convergence of distributional RL.
 
 \section{Distributional RL}
 Distributional Reinforcement Learning was first introduced in \citet{distributional}. We will discuss it in the context of infinite horizon.
-First we define The following are all the random variables involved in the MDP:
+First we define the following random variables that are involved in the MDP:
 \begin{enumerate}
     %\item $r_t\sim \text{P}(\cdot|s_t, a_t)$     (non-deterministic reward)
     \item $r_t, s_t \sim \text{P}(\cdot,\cdot \,|s_{t-1}, a_{t-1})$ (non-deterministic reward and transition)
@@ -520,7 +524,7 @@ The \textbf{return} is defined as
 which is a function that takes an initial state and action pair as input and output a random variable on the initial state and action. 
 \end{defn}
 
-As return, $\Phi^\pi(s,a)$, is a random variable, it has a law, or a distribution.  
+As return, $\Phi^\pi(s,a)$, is a random variable, it has a law or a distribution.  
 Let $\mathcal{D}$ denote \textbf{the space of all distributions of return}.
 We define the value distribution as a mapping from the state-action space to the space of distributions of return below.
 
@@ -537,7 +541,7 @@ $$P(\Phi=\phi)=Z^\pi(a, s)(\phi)$$
 
 
 It is important to understand that for given a and s, $\Phi^\pi(s, a)$ is a random variable and $Z^\pi(s, a)$ is the distribution of that random variable.
-The return and value distributions are linked to the state-action value function described last lecture via the formula 
+The return and value distributions are linked to the state-action value function described in the last lecture via the formula 
 \begin{equation}
     Q^\pi(s, a) := \E_{Z^\pi(s, a)}[\Phi(s, a)]
 \end{equation}
@@ -567,9 +571,9 @@ The return and value distributions are linked to the state-action value function
     \caption{example of distribution $Z^\pi(a,s)(\phi)$}
 \end{figure}
 
-But why would we want to use the distribution instead of its expectation. The problem with expectation is that we lose information about the random variables. \\
+But why would we want to use the distribution instead of its expectation? The problem with expectation is that we lose information about the random variables. \\
 
-For example lets take two dice (A, B) and play a game. The user must choose a die and throw it once. If die A lands on an even number, the player gets 1 dollar and he loses 1 otherwise. If die B land on ${1, 2, 3, 4 ,5}$ he gets 20 dollars and loses 100 dollars if it lands on 6. 
+For example, let's take two dices (A, B) and play a game. The user must choose a dice and throw it once. If dice A lands on an even number, the player gets 1 dollar and he loses 1 otherwise. If dice B lands on ${1, 2, 3, 4 ,5}$ he gets 20 dollars and loses 100 dollars if it lands on 6. 
 Both dice have an expectation of 0,
 %, which means that the
 %gain would average to the same value if the number of throws went to infinity
@@ -583,13 +587,13 @@ Before anything else, we define some algebraic operations between distributions:
 Let $Z_1$, $Z_2$ be two independant univariate distributions and let $\gamma \in \mathbb{R}$ be a constant 
 We define:
 \begin{enumerate}
-    \item $(Z_1+Z_2)(x) := (Z_1 * Z_2)(x)$    ( convolutionnal product)
-    \item $(\gamma \, Z_1)(x) := \frac{1}{\gamma}Z_1(\gamma x) $      (contracting the function horizontally)
-    \item $(\gamma + Z_1)(x) := Z_1(x - \gamma)$     (horizontal translation)
+    \item $(Z_1+Z_2)(x) := (Z_1 * Z_2)(x)$\quad(convolutionnal product)
+    \item $(\gamma \, Z_1)(x) := \frac{1}{\gamma}Z_1(\gamma x) $\quad(contracting the function horizontally)
+    \item $(\gamma + Z_1)(x) := Z_1(x - \gamma)$\quad(horizontal translation)
 \end{enumerate}
 \end{defn}
 
-Now we turn to policy evaluation using distributional RL. The policy $\pi$ is fixed and we want to find the value distribution $Z^\pi(s, a)$ for a given $(s,a)$ pair. First we define the transition operator:
+Now we turn to policy evaluation using distributional RL. The policy $\pi$ is fixed and we want to find the value distribution $Z^\pi(s, a)$ for a given $(s,a)$ pair. First, we define the transition operator:
 \begin{defn}[Transition Operator]
 \label{def:Transition Operator}
 $$P^\pi:\mathcal{D}\rightarrow \mathcal{D}$$
@@ -598,7 +602,7 @@ $$P^\pi:\mathcal{D}\rightarrow \mathcal{D}$$
 \end{equation}
 where $S'\sim P(.|s, a)$ and $A'\sim \pi(.|S')$. Capital letter are used to emphasize the randomness of the new state and action.
 \end{defn} 
-The output of this operator can be seen as a mixture distribution with weight $P(S'=s', A'=a'|a, s)$ for the each component distribution $Z^\pi(s', a')$.
+The output of this operator can be seen as a mixture distribution with weight $P(S'=s', A'=a'|a, s)$ for each component distribution $Z^\pi(s', a')$.
 In what follows, we assume the randomness in the reward and the transition $P^\pi$ are independent. 
 Another operator that we define below is the distributional Bellmann operator:
 \begin{defn}[Distributional Bellmann operator]
@@ -667,7 +671,7 @@ where $\prod (Z_1, Z_2)$ is the set of all joint distributions with marginals $Z
 \end{enumerate}
 \end{defn}
 
-Note that the Wasserstein metrics are metrics of distributions, whereas value distributions are mappings (from the space of state-action pairs to the space of distributions), the former are not yet metrics of the latter.
+Note that the Wasserstein metrics are metrics of distributions, whereas value distributions are mappings (from the space of state-action pairs to the space of distributions), the former is not yet metrics of the latter.
 Let $\mathcal{Z}$ denote the \textbf{space of value distributions} (with bounded moments).
 Let us define a uniform form of the Wasserstein distance as 
 $$\bar{d}_p(Z_1,Z_2) = \sup_{s,a} d_p(Z_1(s,a), Z_2(s,a))$$
@@ -676,7 +680,7 @@ Then we can establish the following result.
 \begin{lem}
 $\bar{d}_p$ is a metric over value distributions.
 \end{lem}
-The only nontrivial part to prove is triangle inequality of a metric.
+The only non-trivial part to prove is triangle inequality of a metric.
 \begin{proof}
 For $Y\in\mathcal{Z}$, we have 
 \begin{align*}
