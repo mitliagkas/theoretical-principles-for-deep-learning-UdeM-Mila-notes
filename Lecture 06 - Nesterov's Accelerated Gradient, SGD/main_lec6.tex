@@ -171,7 +171,7 @@ In the previous lecture we presented Polyak's momentum algorithm (or heavy-ball 
 	x_{t+1} = x_t - \alpha \nabla f(x_t) + \beta (x_t - x_{t-1}), \quad  \alpha > 0, \beta \in [0,1]
 \end{equation}
 
-This method is known to be robust and effective in many real-world applications. However, in a paper published in 2015, \citet{2014arXiv1408.3595L} have shown that there exist strongly-convex and smooth functions for which, by choosing carefully the hyperparameters $\alpha$ and $\beta$ and the initial condition $x_0$, the heavy-ball method fails to converge. We give here merely the intuition behind the malfunction of the algorithm as well as empirical results taken from the paper.
+This method is known to be robust and effective in many real-world applications. However, in a paper published in 2015, \citet{2014arXiv1408.3595L} have shown that there exist strongly-convex and smooth functions for which, by choosing carefully the hyperparameters $\alpha$ and $\beta$ and the initial condition $x_0$, the heavy-ball method gets stuck in a limit cycle and fails to converge. We give here merely the intuition behind the malfunction of the algorithm as well as empirical results taken from the paper.
 
 \vspace{2ex}
 
@@ -247,12 +247,12 @@ Let us look at it from a broader perspective. Consider the family of continuous 
 	\nabla f_{\omega, \epsilon}(x) =  \begin{cases}
     25x &   x < 1 \\
     \omega x+24   &  1 \leq x < 1+\epsilon \\
-    25x-24 & x \geq \epsilon
+    25x-24 & x \geq 1+\epsilon
 \end{cases}
 \end{gather}
 This is a set of piece-wise continuous and piece-wise quadratic functions, where $\omega >0$ represents the curvature of the function within a (small) window of size $\epsilon \geq0$. The counterexample from \cite{2014arXiv1408.3595L} falls into this set with $\omega =\epsilon = 1$.\\
 
-By construction, each function in this family is $\alpha$-strongly convex and $25$-Lipschitz (let's assume $\omega <25$): therefore its condition number is $\kappa = \frac{25}{\omega}$, which can be arbitrarily high for very small values of $\omega$. 
+By construction, each function in this family is $\alpha$-strongly convex and $25$-smooth (let's assume $\omega <25$): therefore its condition number is $\kappa = \frac{25}{\omega}$, which can be arbitrarily high for very small values of $\omega$. 
 
 On the other hand, $\forall \ \omega>0$ fixed, $f_{\omega, \epsilon} \to f_0$ uniformly, where $f_0$ is the corresponding quadratic function with window-size $\epsilon =0$, which clearly has condition number $\kappa = 1$.\\
 
@@ -309,7 +309,7 @@ Comparing equation \eqref{eq:1} with equation \eqref{eq:2}, we can see that Poly
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.8\textwidth]{images/polyak_diff1.PNG}
-  \caption{Comparison between Polyak's and Nesterov's momentum. The gradient descent step (orange arrow) is perpendicular to the level set before applying momentum to $x_1$ (red arrow) in Polyak's algorithm, whereas it is perpendicular to the level set after applying momentum to $x_1$ in Nesterov's algorithm.}
+  \caption{Comparison between Polyak's and Nesterov's momentum. The gradient descent step (orange arrow) is perpendicular to the level set \emph{before} applying momentum to $x_1$ (red arrow) in Polyak's algorithm, whereas it is perpendicular to the level set \emph{after} applying momentum to $x_1$ in Nesterov's algorithm.}
   \label{fig:momentum_comparison}
 \end{figure}
 
@@ -330,7 +330,7 @@ The convergence rate (upper bound on the sub-optimality) for different classes o
   \label{labt1}
 \end{table}
 
-Nesterov's Augmented Gradient in the case of smooth and strongly convex functions gives the acceleration that we had with Polyak's momentum for quadratic functions. This is great, because we get the guarantee for a more general class of functions. Recall that if $f$ is $\mu$-strongly convex and $\lambda$-smooth then $\kappa = \frac{\lambda}{\mu}$. Therefore, when $\lambda << \mu$ (i.e. some dimensions have very steep gradients), the acceleration becomes very significant.
+Nesterov's Augmented Gradient in the case of smooth and strongly convex functions gives the acceleration that we had with Polyak's momentum for quadratic functions. This is great, because we get the guarantee for a more general class of functions. Recall that if $f$ is $\mu$-strongly convex and $\lambda$-smooth then $\kappa = \frac{\lambda}{\mu}$. Therefore, when $\lambda >> \mu$ (i.e. some dimensions have very steep gradients), the acceleration becomes very significant.
 \newline
 
 \subsection{General scheme for the Convergence of Nesterov's Accelerated Gradient Descent}
