@@ -61,7 +61,7 @@
 
 % Packages hyperref and algorithmic misbehave sometimes.  We can fix
 % this with the following command.
-\newcommand{\theHalgorithm}{\arabic{algorithm}}
+\providecommand{\theHalgorithm}{\arabic{algorithm}}
 
 %----------------------------------------
 % Standard macros
@@ -410,6 +410,6 @@ One can observe that despite the fact the bound for $\mathbb{E}[D[h_S]]$ is tigh
 
 %----------------------------------------
 \bibliographystyle{abbrvnat}
-\bibliography{Refs/lec9}
+\bibliography{../Refs/lec9}
 %----------------------------------------
 \end{document}

@@ -58,7 +58,7 @@
 
 % Packages hyperref and algorithmic misbehave sometimes.  We can fix
 % this with the following command.
-\newcommand{\theHalgorithm}{\arabic{algorithm}}
+\providecommand{\theHalgorithm}{\arabic{algorithm}}
 
 %----------------------------------------
 % Standard macros
@@ -1194,7 +1194,7 @@ This completes the proof and provides us with the desired lower bound!
 
 %----------------------------------------
 \bibliographystyle{abbrvnat}
-\bibliography{Refs/lec4}
+\bibliography{../Refs/lec4}
 
 \newpage
 %----------------------------------------

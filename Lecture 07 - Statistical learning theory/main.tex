@@ -58,7 +58,7 @@
 
 % Packages hyperref and algorithmic misbehave sometimes.  We can fix
 % this with the following command.
-\newcommand{\theHalgorithm}{\arabic{algorithm}}
+\providecommand{\theHalgorithm}{\arabic{algorithm}}
 \DeclareMathOperator*{\argmin}{argmin}
 
 %----------------------------------------
@@ -362,7 +362,7 @@ In this example, $\HH$ is of infinite size, yet it is still PAC learnable. Indee
 
 %----------------------------------------
 \bibliographystyle{abbrvnat}
-\bibliography{Refs/lec7}
+\bibliography{../Refs/lec7}
 %----------------------------------------
 \end{document}
 

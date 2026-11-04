@@ -102,7 +102,7 @@
 
 % Packages hyperref and algorithmic misbehave sometimes.  We can fix
 % this with the following command.
-\newcommand{\theHalgorithm}{\arabic{algorithm}}
+\providecommand{\theHalgorithm}{\arabic{algorithm}}
 
 %----------------------------------------
 % Standard macros
@@ -766,6 +766,6 @@ However, we obtain a convergence in average, which is very useful for some type 
 
 %----------------------------------------
 \bibliographystyle{abbrvnat}
-\bibliography{Refs/lec2}
+\bibliography{../Refs/lec2}
 %----------------------------------------
 \end{document}

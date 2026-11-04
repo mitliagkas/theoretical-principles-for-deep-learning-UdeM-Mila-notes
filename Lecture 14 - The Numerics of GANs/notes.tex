@@ -58,7 +58,7 @@
 
 % Packages hyperref and algorithmic misbehave sometimes.  We can fix
 % this with the following command.
-\newcommand{\theHalgorithm}{\arabic{algorithm}}
+\providecommand{\theHalgorithm}{\arabic{algorithm}}
 
 %----------------------------------------
 % Standard macros
@@ -542,6 +542,6 @@ For general games, \citet{Gidel18NegMom} continues on to show that negative mome
 
 %----------------------------------------
 \bibliographystyle{abbrvnat}
-\bibliography{Refs/lec14}
+\bibliography{../Refs/lec14}
 %----------------------------------------
 \end{document}
