@@ -40,7 +40,7 @@ Any recent TeX Live or MacTeX works. Lectures 5 and 7 also need the `doublestrok
 
 ## Acknowledgements
 
-Thanks to [Jose Gallego-Posada](https://jgalle29.github.io/), former TA of the class, who first assembled the existing notes in this repository.
+Thanks to [Jose Gallego-Posada](https://gallego-posada.github.io/), former TA of the class, who first assembled the existing notes in this repository.
 
 ## Contributing
 
