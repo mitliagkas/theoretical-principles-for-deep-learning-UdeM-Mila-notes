@@ -38,6 +38,10 @@ pdflatex main_lec6.tex
 
 Any recent TeX Live or MacTeX works. Lectures 5 and 7 also need the `doublestroke` and `bbm` packages (`tlmgr install doublestroke bbm bbm-macros`), which a full MacTeX install already includes. Known LaTeX errors that remain in some lectures are tracked in [#8](../../issues/8).
 
+## Acknowledgements
+
+Thanks to [Jose Gallego-Posada](https://jgalle29.github.io/), former TA of the class, who first assembled the existing notes in this repository.
+
 ## Contributing
 
 Corrections are welcome through pull requests (typos, errors in derivations, broken references). Please keep each PR to one lecture where possible. If you scribed or corrected a lecture, add your name to its scribe list under the right year.
