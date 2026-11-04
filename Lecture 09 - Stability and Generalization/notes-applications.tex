@@ -56,7 +56,7 @@
 
 % Packages hyperref and algorithmic misbehave sometimes.  We can fix
 % this with the following command.
-\newcommand{\theHalgorithm}{\arabic{algorithm}}
+\providecommand{\theHalgorithm}{\arabic{algorithm}}
 \newcommand{\amy}[1]{\textbf{\textcolor{blue}{#1}}}
 \newcommand{\liam}[1]{\textbf{\textcolor{red}{#1}}}
 
@@ -336,6 +336,6 @@ SGD is therefore \textbf{stable} since $\sum_{t=0} ^ {T-1}  \frac{ 2 \alpha_t L 
 
 %----------------------------------------
 \bibliographystyle{abbrvnat}
-\bibliography{Refs/lec9b}
+\bibliography{../Refs/lec9b}
 %----------------------------------------
 \end{document}

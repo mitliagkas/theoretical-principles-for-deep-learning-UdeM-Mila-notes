@@ -61,7 +61,7 @@
 
 % Packages hyperref and algorithmic misbehave sometimes.  We can fix
 % this with the following command.
-\newcommand{\theHalgorithm}{\arabic{algorithm}}
+\providecommand{\theHalgorithm}{\arabic{algorithm}}
 
 %----------------------------------------
 % Standard macros
@@ -639,6 +639,6 @@ Since $\beta$ is $O(\frac{1}{n})$, we can conclude that SGD is \textbf{stable}.
 
 %----------------------------------------
 \bibliographystyle{abbrvnat}
-\bibliography{Refs/lec9}
+\bibliography{../Refs/lec9}
 %----------------------------------------
 \end{document}

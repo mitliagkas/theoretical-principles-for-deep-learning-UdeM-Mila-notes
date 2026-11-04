@@ -55,7 +55,7 @@
 
 % Packages hyperref and algorithmic misbehave sometimes.  We can fix
 % this with the following command.
-\newcommand{\theHalgorithm}{\arabic{algorithm}}
+\providecommand{\theHalgorithm}{\arabic{algorithm}}
 
 %----------------------------------------
 % Standard macros
@@ -720,6 +720,6 @@ In this lecture, we saw the infinite horizon variant of RL. We introduced the Ba
 
 %----------------------------------------
 \bibliographystyle{abbrvnat}
-\bibliography{Refs/notes19b.bib}
+\bibliography{../Refs/notes19b.bib}
 %----------------------------------------
 \end{document}

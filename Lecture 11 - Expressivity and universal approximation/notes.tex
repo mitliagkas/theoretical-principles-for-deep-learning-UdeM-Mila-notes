@@ -50,7 +50,7 @@
 
 % Packages hyperref and algorithmic misbehave sometimes.  We can fix
 % this with the following command.
-\newcommand{\theHalgorithm}{\arabic{algorithm}}
+\providecommand{\theHalgorithm}{\arabic{algorithm}}
 %----------------------------------------
 % Standard macros
 %----------------------------------------
@@ -406,7 +406,7 @@ This lemma says that the addition of sawtooth functions results in a function wh
 
 %----------------------------------------
 \bibliographystyle{abbrvnat}
-\bibliography{Refs/lec11}
+\bibliography{../Refs/lec11}
 %----------------------------------------
 
 \end{document}

@@ -80,7 +80,7 @@
 
 % Packages hyperref and algorithmic misbehave sometimes.  We can fix
 % this with the following command.
-\newcommand{\theHalgorithm}{\arabic{algorithm}}
+\providecommand{\theHalgorithm}{\arabic{algorithm}}
 
 %----------------------------------------
 % Standard macros
@@ -413,7 +413,7 @@ Here are some examples of posteriors:
 One complication with PAC-Bayes bound is that it doesn't give us a generalization guarantee for a particular hypothesis $h$. Instead, it gives an upper bound over draws from distribution $Q$. In other words, if we randomly sample a hypothesis from distribution $Q$, then, \emph{in expectation}, the generalization gap is going to be bounded by the aforementioned term (\ref{pacbayesbound}).
 
 \vspace{0.5cm}
-\bibliography{Refs/lec8}
+\bibliography{../Refs/lec8}
 \bibliographystyle{abbrvnat}
 
 
